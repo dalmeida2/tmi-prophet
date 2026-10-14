@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SDD contract manifest (specs/contracts/manifest.json)",
+  "description": "Declares the project type, the observable interfaces, which machine contracts exist, and every deliberate deviation from the Equivalence Profile.",
+  "type": "object",
+  "required": ["projectType", "interfaces", "artifacts", "equivalenceTarget"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": { "type": "string" },
+    "projectType": { "enum": ["backend-service", "fullstack-app", "client-side-app", "game", "cli-tool", "library"] },
+    "interfaces": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "enum": ["http", "cli", "browser", "library"] }
+    },
+    "artifacts": {
+      "description": "Artifact key (see contract-matrix.json) -> file name inside specs/contracts/.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "openapi": { "type": "string", "pattern": "^openapi\\.(ya?ml|json)$" },
+        "errors": { "const": "errors.json" },
+        "statecharts": { "const": "statecharts.json" },
+        "schema": { "type": "string", "pattern": "^schema\\.(sql|prisma)$" },
+        "storage": { "const": "storage.schema.json" },
+        "levels": { "const": "levels.schema.json" },
+        "cli": { "const": "cli.json" },
+        "api": { "type": "string", "pattern": "^api\\.(d\\.ts|pyi|json)$" }
+      }
+    },
+    "notApplicable": {
+      "description": "Conditional artifact key -> justification for omitting it.",
+      "type": "object",
+      "additionalProperties": { "type": "string", "minLength": 20 }
+    },
+    "equivalenceTarget": {
+      "description": "1 = oracle-conformant (oracle 100% green). 2 = equivalence-verified (also requires a zero-divergence `oracle.cjs diff` / `diff-ui` between two independent builds). Lowering to 1 requires equivalenceTargetDecision.",
+      "enum": [1, 2]
+    },
+    "equivalenceTargetDecision": {
+      "description": "DECISION_LOG id recording the user's decision to certify only L1 (required when equivalenceTarget is 1).",
+      "type": "string",
+      "pattern": "^DEC[0-9]+$"
+    },
+    "profileOverrides": {
+      "description": "Every deviation from systems-standards.md (Equivalence Profile).",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["rule", "override", "decision"],
+        "additionalProperties": false,
+        "properties": {
+          "rule": { "type": "string", "pattern": "^[A-Z]+-[0-9]+$" },
+          "override": { "type": "string", "minLength": 10 },
+          "decision": { "type": "string", "pattern": "^DEC[0-9]+$" }
+        }
+      }
+    },
+    "coverageExempt": {
+      "description": "Coverage item (e.g. error:INTERNAL_ERROR, op:getHealth:503) -> why it cannot be exercised black-box.",
+      "type": "object",
+      "propertyNames": { "pattern": "^(op|transition|illegal|inv|error|cmd):.+$" },
+      "additionalProperties": { "type": "string", "minLength": 20 }
+    }
+  }
+}

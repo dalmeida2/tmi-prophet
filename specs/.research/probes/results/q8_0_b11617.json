@@ -1,0 +1,272 @@
+{
+ "AUS_1645Z": {
+  "ms": 899,
+  "answers": {
+   "gs_or_gdp_within_3h": {
+    "type": "noul",
+    "noul": 0.7597964070811951
+   },
+   "next_transition": {
+    "type": "choice",
+    "choice": "NO_CHANGE",
+    "probabilities": {
+     "NO_CHANGE": 0.4226563659007916,
+     "GS_ISSUED": 0.08541700415916097,
+     "GDP_PROPOSED": 0.2717149762896032,
+     "GDP_ISSUED": 0.07153907372160939,
+     "GDP_CANCELLED": 0.0056492063827294145,
+     "DELAY_ADVISORY": 0.14302337354610545
+    },
+    "confidence": 0.3071876390809499
+   },
+   "timing": {
+    "type": "score",
+    "score": 1.5229459670891479,
+    "legend": {
+     "0": "Not within 3 hours",
+     "1": "In 2 to 3 hours",
+     "2": "In 1 to 2 hours",
+     "3": "In 30 to 60 minutes",
+     "4": "Within 30 minutes"
+    },
+    "probabilities": {
+     "0": 0.26807464490399463,
+     "1": 0.28081124111720496,
+     "2": 0.22240324816317752,
+     "3": 0.1175152336169033,
+     "4": 0.11119563219871953
+    },
+    "confidence": 0.11742061925238556
+   }
+  },
+  "usage": {
+   "input_tokens": 796,
+   "output_tokens": 0
+  }
+ },
+ "LGA_1600Z": {
+  "ms": 912,
+  "answers": {
+   "gs_or_gdp_within_3h": {
+    "type": "noul",
+    "noul": 0.15266032901639062
+   },
+   "next_transition": {
+    "type": "choice",
+    "choice": "NO_CHANGE",
+    "probabilities": {
+     "NO_CHANGE": 0.5513583638273076,
+     "GS_ISSUED": 0.03913146067799554,
+     "GDP_PROPOSED": 0.09780360750008069,
+     "GDP_ISSUED": 0.09446033461595647,
+     "GDP_CANCELLED": 0.022464879128763045,
+     "DELAY_ADVISORY": 0.19478135424989665
+    },
+    "confidence": 0.4616300365927692
+   },
+   "timing": {
+    "type": "score",
+    "score": 1.504500478518967,
+    "legend": {
+     "0": "Not within 3 hours",
+     "1": "In 2 to 3 hours",
+     "2": "In 1 to 2 hours",
+     "3": "In 30 to 60 minutes",
+     "4": "Within 30 minutes"
+    },
+    "probabilities": {
+     "0": 0.21893534039933724,
+     "1": 0.33142881444441136,
+     "2": 0.2545329446183643,
+     "3": 0.1164058273137209,
+     "4": 0.07869707322416612
+    },
+    "confidence": 0.21469070056863204
+   }
+  },
+  "usage": {
+   "input_tokens": 793,
+   "output_tokens": 0
+  }
+ },
+ "BOS_1100Z": {
+  "ms": 784,
+  "answers": {
+   "gs_or_gdp_within_3h": {
+    "type": "noul",
+    "noul": 0.2426413929733525
+   },
+   "next_transition": {
+    "type": "choice",
+    "choice": "NO_CHANGE",
+    "probabilities": {
+     "NO_CHANGE": 0.4879296335409723,
+     "GS_ISSUED": 0.05936398577558271,
+     "GDP_PROPOSED": 0.12247489999009772,
+     "GDP_ISSUED": 0.1089381837484319,
+     "GDP_CANCELLED": 0.026054709876868542,
+     "DELAY_ADVISORY": 0.19523858706804673
+    },
+    "confidence": 0.3855155602491668
+   },
+   "timing": {
+    "type": "score",
+    "score": 1.387686480749151,
+    "legend": {
+     "0": "Not within 3 hours",
+     "1": "In 2 to 3 hours",
+     "2": "In 1 to 2 hours",
+     "3": "In 30 to 60 minutes",
+     "4": "Within 30 minutes"
+    },
+    "probabilities": {
+     "0": 0.2923859891409948,
+     "1": 0.3063419172086794,
+     "2": 0.21045678404641435,
+     "3": 0.10283024296800364,
+     "4": 0.087985066635908
+    },
+    "confidence": 0.1896179508073832
+   }
+  },
+  "usage": {
+   "input_tokens": 625,
+   "output_tokens": 0
+  }
+ },
+ "DEN_1530Z": {
+  "ms": 842,
+  "answers": {
+   "gs_or_gdp_within_3h": {
+    "type": "noul",
+    "noul": 0.7245369302937916
+   },
+   "next_transition": {
+    "type": "choice",
+    "choice": "NO_CHANGE",
+    "probabilities": {
+     "NO_CHANGE": 0.4407026423948183,
+     "GS_ISSUED": 0.038908174993760626,
+     "GDP_PROPOSED": 0.27422550364905296,
+     "GDP_ISSUED": 0.13060944063279323,
+     "GDP_CANCELLED": 0.013644123977470852,
+     "DELAY_ADVISORY": 0.10191011435210394
+    },
+    "confidence": 0.32884317087378195
+   },
+   "timing": {
+    "type": "score",
+    "score": 1.9835362089552135,
+    "legend": {
+     "0": "Not within 3 hours",
+     "1": "In 2 to 3 hours",
+     "2": "In 1 to 2 hours",
+     "3": "In 30 to 60 minutes",
+     "4": "Within 30 minutes"
+    },
+    "probabilities": {
+     "0": 0.1740497672509301,
+     "1": 0.2632229328227358,
+     "2": 0.17864888839637863,
+     "3": 0.17329814678010133,
+     "4": 0.21078026474985415
+    },
+    "confidence": 0.0
+   }
+  },
+  "usage": {
+   "input_tokens": 703,
+   "output_tokens": 0
+  }
+ },
+ "ATL_1600Z": {
+  "ms": 737,
+  "answers": {
+   "gs_or_gdp_within_3h": {
+    "type": "noul",
+    "noul": 0.05341972343263872
+   },
+   "next_transition": {
+    "type": "choice",
+    "choice": "NO_CHANGE",
+    "probabilities": {
+     "NO_CHANGE": 0.7356752042780822,
+     "GS_ISSUED": 0.02072811377642146,
+     "GDP_PROPOSED": 0.05741441949182402,
+     "GDP_ISSUED": 0.05505663720470095,
+     "GDP_CANCELLED": 0.021001271285189558,
+     "DELAY_ADVISORY": 0.11012435396378176
+    },
+    "confidence": 0.6828102451336987
+   },
+   "timing": {
+    "type": "score",
+    "score": 0.9293603683745721,
+    "legend": {
+     "0": "Not within 3 hours",
+     "1": "In 2 to 3 hours",
+     "2": "In 1 to 2 hours",
+     "3": "In 30 to 60 minutes",
+     "4": "Within 30 minutes"
+    },
+    "probabilities": {
+     "0": 0.5054912901437233,
+     "1": 0.2349022738181962,
+     "2": 0.13956282987228952,
+     "3": 0.06484198985136741,
+     "4": 0.05520161631442368
+    },
+    "confidence": 0.22553302635452332
+   }
+  },
+  "usage": {
+   "input_tokens": 577,
+   "output_tokens": 0
+  }
+ },
+ "SFO_1600Z": {
+  "ms": 729,
+  "answers": {
+   "gs_or_gdp_within_3h": {
+    "type": "noul",
+    "noul": 0.06617501845861343
+   },
+   "next_transition": {
+    "type": "choice",
+    "choice": "NO_CHANGE",
+    "probabilities": {
+     "NO_CHANGE": 0.5734082260894132,
+     "GS_ISSUED": 0.028569940022294068,
+     "GDP_PROPOSED": 0.09508221829009375,
+     "GDP_ISSUED": 0.09436972799096224,
+     "GDP_CANCELLED": 0.022981037456260168,
+     "DELAY_ADVISORY": 0.18558885015097648
+    },
+    "confidence": 0.48808987130729586
+   },
+   "timing": {
+    "type": "score",
+    "score": 1.0494277351512238,
+    "legend": {
+     "0": "Not within 3 hours",
+     "1": "In 2 to 3 hours",
+     "2": "In 1 to 2 hours",
+     "3": "In 30 to 60 minutes",
+     "4": "Within 30 minutes"
+    },
+    "probabilities": {
+     "0": 0.4420409992129958,
+     "1": 0.2702482608567972,
+     "2": 0.1495149408550671,
+     "3": 0.07263360371626701,
+     "4": 0.06556219535887284
+    },
+    "confidence": 0.12547688737398033
+   }
+  },
+  "usage": {
+   "input_tokens": 547,
+   "output_tokens": 0
+  }
+ }
+}

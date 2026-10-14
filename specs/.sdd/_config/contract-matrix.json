@@ -1,0 +1,166 @@
+{
+  "description": "Single source of truth for which machine contracts each project type must produce. Read by sdd.cjs and referenced by completeness-checklist.md. 'required' artifacts must exist; 'conditional' artifacts must exist OR be listed in specs/contracts/manifest.json#notApplicable with a justification.",
+  "types": {
+    "backend-service": {
+      "ui": false,
+      "defaultInterfaces": [
+        "http"
+      ],
+      "required": [
+        "openapi",
+        "errors"
+      ],
+      "conditional": [
+        "schema",
+        "statecharts"
+      ]
+    },
+    "fullstack-app": {
+      "ui": true,
+      "defaultInterfaces": [
+        "http",
+        "browser"
+      ],
+      "required": [
+        "openapi",
+        "errors"
+      ],
+      "conditional": [
+        "schema",
+        "statecharts",
+        "storage"
+      ]
+    },
+    "client-side-app": {
+      "ui": true,
+      "defaultInterfaces": [
+        "browser"
+      ],
+      "required": [
+        "statecharts",
+        "errors"
+      ],
+      "conditional": [
+        "storage"
+      ]
+    },
+    "game": {
+      "ui": true,
+      "defaultInterfaces": [
+        "browser",
+        "cli"
+      ],
+      "required": [
+        "statecharts",
+        "errors"
+      ],
+      "conditional": [
+        "storage",
+        "levels",
+        "cli"
+      ],
+      "note": "Expose deterministic game logic through a headless 'cli' simulation entry point (seed + input sequence -> state JSON) so the oracle can grade it."
+    },
+    "cli-tool": {
+      "ui": false,
+      "defaultInterfaces": [
+        "cli"
+      ],
+      "required": [
+        "cli",
+        "errors"
+      ],
+      "conditional": [
+        "schema",
+        "statecharts",
+        "storage"
+      ]
+    },
+    "library": {
+      "ui": false,
+      "defaultInterfaces": [
+        "library"
+      ],
+      "required": [
+        "api",
+        "errors"
+      ],
+      "conditional": [
+        "statecharts"
+      ],
+      "note": "The oracle reaches a library through a frozen JSON-in/JSON-out adapter in specs/fixtures/adapters/, invoked by 'run' steps."
+    }
+  },
+  "artifacts": {
+    "openapi": {
+      "files": [
+        "openapi.yaml",
+        "openapi.yml",
+        "openapi.json"
+      ],
+      "kind": "openapi",
+      "describes": "HTTP operations, parameters, request/response schemas, declared statuses"
+    },
+    "errors": {
+      "files": [
+        "errors.json"
+      ],
+      "kind": "errors",
+      "schema": "errors.schema.json",
+      "describes": "Canonical error taxonomy (codes, HTTP status or exit code, retryable)"
+    },
+    "statecharts": {
+      "files": [
+        "statecharts.json"
+      ],
+      "kind": "statecharts",
+      "schema": "statecharts.schema.json",
+      "describes": "Entity lifecycles: states, transitions, guards, illegal-transition error"
+    },
+    "schema": {
+      "files": [
+        "schema.sql",
+        "schema.prisma"
+      ],
+      "kind": "ddl",
+      "describes": "Persistent relational storage DDL"
+    },
+    "storage": {
+      "files": [
+        "storage.schema.json"
+      ],
+      "kind": "json-schema",
+      "describes": "Client/local storage shapes (localStorage, IndexedDB, files)"
+    },
+    "levels": {
+      "files": [
+        "levels.schema.json"
+      ],
+      "kind": "json-schema",
+      "describes": "Game level/config documents"
+    },
+    "cli": {
+      "files": [
+        "cli.json"
+      ],
+      "kind": "cli",
+      "schema": "cli.schema.json",
+      "describes": "Commands, arguments, flags, exit codes, stdout formats (cli tools; a game's headless simulation)"
+    },
+    "api": {
+      "files": [
+        "api.d.ts",
+        "api.pyi",
+        "api.json"
+      ],
+      "kind": "text",
+      "describes": "Public library API signatures"
+    }
+  },
+  "interfaces": {
+    "http": "Graded by oracle.cjs http steps against openapi operations",
+    "cli": "Graded by oracle.cjs run steps",
+    "library": "Graded by oracle.cjs run steps through a frozen adapter",
+    "browser": "Graded by frozen black-box UI specs in specs/fixtures/ui/ (data-testid selectors only), compared across builds with `oracle.cjs diff-ui`, plus Stage 06 VAT"
+  }
+}

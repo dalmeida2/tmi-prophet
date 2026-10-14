@@ -1,0 +1,19 @@
+{
+  "$schema": "../../../../schemas/statecharts.schema.json",
+  "machines": [
+    {
+      "id": "note",
+      "entity": "notes",
+      "description": "A note is edited as a draft, then published once.",
+      "initial": "draft",
+      "states": [
+        { "id": "draft", "description": "Editable via updateNote." },
+        { "id": "published", "terminal": true, "retention": "Kept until deleted with deleteNote (hard delete, no tombstone).", "description": "Title and body frozen (V2)." }
+      ],
+      "transitions": [
+        { "id": "note.publish", "from": "draft", "event": "PUBLISH", "to": "published", "guard": "status == 'draft'", "actions": ["version += 1", "updated_at = now"], "operationId": "publishNote" }
+      ],
+      "illegalTransitionError": "INVALID_STATE_TRANSITION"
+    }
+  ]
+}

@@ -1,0 +1,129 @@
+endpoint http://127.0.0.1:9931/v1/systemone  model LiquidAI/d1-3B-GGUF:BF16
+
+====================================================================================================
+RUN 1 — full answers for each airport picture
+====================================================================================================
+
+AUS_1645Z   (5771 ms, 796 input tokens)
+  GS/GDP within 3 h   ███████████████████████······· 0.755
+  next transition     → NO_CHANGE  (confidence 0.31)
+      NO_CHANGE        ████████············ 0.421
+      GDP_PROPOSED     █████··············· 0.272
+      DELAY_ADVISORY   ███················· 0.141
+      GS_ISSUED        ██·················· 0.088
+      GDP_ISSUED       █··················· 0.071
+      GDP_CANCELLED    ···················· 0.006
+  timing score        1.53 of 4   (0 = not within 3 h … 4 = within 30 min)
+      0 Not within 3 hours     █████··············· 0.263
+      1 In 2 to 3 hours        ██████·············· 0.282
+      2 In 1 to 2 hours        █████··············· 0.225
+      3 In 30 to 60 minutes    ██·················· 0.118
+      4 Within 30 minutes      ██·················· 0.111
+
+LGA_1600Z   (921 ms, 793 input tokens)
+  GS/GDP within 3 h   ████·························· 0.149
+  next transition     → NO_CHANGE  (confidence 0.47)
+      NO_CHANGE        ███████████········· 0.555
+      DELAY_ADVISORY   ████················ 0.193
+      GDP_PROPOSED     ██·················· 0.096
+      GDP_ISSUED       ██·················· 0.093
+      GS_ISSUED        █··················· 0.039
+      GDP_CANCELLED    ···················· 0.023
+  timing score        1.51 of 4   (0 = not within 3 h … 4 = within 30 min)
+      0 Not within 3 hours     ████················ 0.221
+      1 In 2 to 3 hours        ███████············· 0.329
+      2 In 1 to 2 hours        █████··············· 0.253
+      3 In 30 to 60 minutes    ██·················· 0.117
+      4 Within 30 minutes      ██·················· 0.080
+
+BOS_1100Z   (792 ms, 625 input tokens)
+  GS/GDP within 3 h   ███████······················· 0.238
+  next transition     → NO_CHANGE  (confidence 0.39)
+      NO_CHANGE        ██████████·········· 0.491
+      DELAY_ADVISORY   ████················ 0.195
+      GDP_PROPOSED     ██·················· 0.121
+      GDP_ISSUED       ██·················· 0.108
+      GS_ISSUED        █··················· 0.059
+      GDP_CANCELLED    █··················· 0.026
+  timing score        1.39 of 4   (0 = not within 3 h … 4 = within 30 min)
+      0 Not within 3 hours     ██████·············· 0.292
+      1 In 2 to 3 hours        ██████·············· 0.306
+      2 In 1 to 2 hours        ████················ 0.211
+      3 In 30 to 60 minutes    ██·················· 0.102
+      4 Within 30 minutes      ██·················· 0.089
+
+DEN_1530Z   (890 ms, 703 input tokens)
+  GS/GDP within 3 h   ██████████████████████········ 0.722
+  next transition     → NO_CHANGE  (confidence 0.32)
+      NO_CHANGE        █████████··········· 0.433
+      GDP_PROPOSED     ██████·············· 0.278
+      GDP_ISSUED       ███················· 0.134
+      DELAY_ADVISORY   ██·················· 0.101
+      GS_ISSUED        █··················· 0.040
+      GDP_CANCELLED    ···················· 0.013
+  timing score        1.97 of 4   (0 = not within 3 h … 4 = within 30 min)
+      0 Not within 3 hours     ████················ 0.175
+      1 In 2 to 3 hours        █████··············· 0.265
+      2 In 1 to 2 hours        ████················ 0.180
+      3 In 30 to 60 minutes    ███················· 0.171
+      4 Within 30 minutes      ████················ 0.208
+
+ATL_1600Z   (774 ms, 577 input tokens)
+  GS/GDP within 3 h   ██···························· 0.052
+  next transition     → NO_CHANGE  (confidence 0.68)
+      NO_CHANGE        ███████████████····· 0.737
+      DELAY_ADVISORY   ██·················· 0.109
+      GDP_PROPOSED     █··················· 0.056
+      GDP_ISSUED       █··················· 0.054
+      GDP_CANCELLED    ···················· 0.022
+      GS_ISSUED        ···················· 0.021
+  timing score        0.94 of 4   (0 = not within 3 h … 4 = within 30 min)
+      0 Not within 3 hours     ██████████·········· 0.503
+      1 In 2 to 3 hours        █████··············· 0.236
+      2 In 1 to 2 hours        ███················· 0.141
+      3 In 30 to 60 minutes    █··················· 0.065
+      4 Within 30 minutes      █··················· 0.056
+
+SFO_1600Z   (738 ms, 547 input tokens)
+  GS/GDP within 3 h   ██···························· 0.064
+  next transition     → NO_CHANGE  (confidence 0.50)
+      NO_CHANGE        ████████████········ 0.582
+      DELAY_ADVISORY   ████················ 0.183
+      GDP_PROPOSED     ██·················· 0.092
+      GDP_ISSUED       ██·················· 0.091
+      GS_ISSUED        █··················· 0.028
+      GDP_CANCELLED    ···················· 0.024
+  timing score        1.05 of 4   (0 = not within 3 h … 4 = within 30 min)
+      0 Not within 3 hours     █████████··········· 0.444
+      1 In 2 to 3 hours        █████··············· 0.268
+      2 In 1 to 2 hours        ███················· 0.150
+      3 In 30 to 60 minutes    █··················· 0.073
+      4 Within 30 minutes      █··················· 0.065
+
+====================================================================================================
+RUN 2 — LGA: does probability rise as storm evidence accumulates? (FAA ground stop came at 16:29Z)
+====================================================================================================
+  1  plan + demand only            ██···························· 0.070
+  2  + ITWS storms within 5 NM     ██████························ 0.205
+  3  + ATIS light rain             ████·························· 0.141
+  4  + FAA delay advisory          ███████······················· 0.248
+
+====================================================================================================
+RUN 3 — horizon consistency: P(within 1 h) ≤ P(within 3 h) ≤ P(within 6 h) must hold
+====================================================================================================
+  AUS_1645Z  1 h 0.738   3 h 0.756   6 h 0.756   consistent
+  DEN_1530Z  1 h 0.701   3 h 0.721   6 h 0.732   consistent
+  LGA_1600Z  1 h 0.140   3 h 0.149   6 h 0.151   consistent
+  ATL_1600Z  1 h 0.050   3 h 0.052   6 h 0.052   INCONSISTENT
+
+====================================================================================================
+RUN 4 — AUS: how much does the FAA Operations Plan 'POSSIBLE' line drive the answer?
+====================================================================================================
+  with plan line       ███████████████████████······· 0.755
+  plan line removed    ███··························· 0.114
+
+====================================================================================================
+RUN 5 — horizon as clock time instead of duration
+====================================================================================================
+  AUS_1645Z  before 17:45Z: 0.440   before 19:45Z: 0.702   before 22:45Z: 0.718
+  DEN_1530Z  before 16:30Z: 0.168   before 18:30Z: 0.404   before 21:30Z: 0.741

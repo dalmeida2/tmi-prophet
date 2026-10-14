@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SDD statecharts (specs/contracts/statecharts.json)",
+  "description": "Finite state machines for every entity with a lifecycle. sdd.cjs additionally checks: initial/from/to reference declared states, every state is reachable, terminal states have no outgoing transitions, non-terminal states have at least one, and referenced error codes/operationIds exist.",
+  "type": "object",
+  "required": ["machines"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": { "type": "string" },
+    "machines": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "initial", "states", "transitions", "illegalTransitionError"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
+          "entity": { "type": "string", "description": "Table/collection that stores this entity." },
+          "description": { "type": "string" },
+          "initial": { "type": "string" },
+          "states": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "required": ["id"],
+              "additionalProperties": false,
+              "properties": {
+                "id": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
+                "terminal": { "type": "boolean" },
+                "retention": { "type": "string", "description": "Terminal states: retention / tombstone / purge policy." },
+                "description": { "type": "string" }
+              }
+            }
+          },
+          "transitions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["id", "from", "event", "to"],
+              "additionalProperties": false,
+              "properties": {
+                "id": { "type": "string", "pattern": "^[a-z][a-z0-9_]*\\.[a-z][a-z0-9_]*$", "description": "<machine>.<name>, globally unique; referenced by fixtures as transition:<id>." },
+                "from": { "type": "string" },
+                "event": { "type": "string", "pattern": "^[A-Z][A-Z0-9_]*$" },
+                "to": { "type": "string" },
+                "guard": { "type": "string", "description": "Exact boolean condition; no prose like 'if valid'." },
+                "guardFailureError": { "type": "string", "pattern": "^[A-Z][A-Z0-9_]*$" },
+                "actors": { "type": "array", "items": { "type": "string" } },
+                "actions": { "type": "array", "items": { "type": "string" } },
+                "operationId": { "type": "string" }
+              }
+            }
+          },
+          "illegalTransitionError": { "type": "string", "pattern": "^[A-Z][A-Z0-9_]*$" }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,228 @@
+openapi: 3.1.0
+info:
+  title: Notes Service
+  version: 1.0.0
+  description: >
+    Reference example for the SDD ICM template. Follows the Equivalence Profile
+    (specs/.sdd/_config/references/systems-standards.md); see SPEC.md for domain rules.
+paths:
+  /healthz:
+    get:
+      operationId: getHealth
+      responses:
+        '200':
+          description: Service is up.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status]
+                additionalProperties: false
+                properties:
+                  status: { type: string, const: ok }
+        '422': { $ref: '#/components/responses/Problem' }
+  /notes:
+    get:
+      operationId: listNotes
+      parameters:
+        - name: limit
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
+        - name: cursor
+          in: query
+          schema: { type: string }
+        - name: status
+          in: query
+          schema: { $ref: '#/components/schemas/NoteStatus' }
+      responses:
+        '200':
+          description: One page of notes, newest first.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/NoteList' }
+        '422': { $ref: '#/components/responses/Problem' }
+    post:
+      operationId: createNote
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/NoteCreate' }
+      responses:
+        '201':
+          description: Created (or replayed with Idempotent-Replay true).
+          headers:
+            Location: { schema: { type: string } }
+            ETag: { schema: { type: string } }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Note' }
+        '400': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '415': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+  /notes/{id}:
+    parameters:
+      - $ref: '#/components/parameters/NoteId'
+    get:
+      operationId: getNote
+      responses:
+        '200':
+          description: The note.
+          headers:
+            ETag: { schema: { type: string } }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Note' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+    patch:
+      operationId: updateNote
+      parameters:
+        - $ref: '#/components/parameters/IfMatch'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/NotePatch' }
+      responses:
+        '200':
+          description: Updated note.
+          headers:
+            ETag: { schema: { type: string } }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Note' }
+        '400': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '412': { $ref: '#/components/responses/Problem' }
+        '415': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+        '428': { $ref: '#/components/responses/Problem' }
+    delete:
+      operationId: deleteNote
+      parameters:
+        - $ref: '#/components/parameters/IfMatch'
+      responses:
+        '204':
+          description: Deleted. No body.
+        '404': { $ref: '#/components/responses/Problem' }
+        '412': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+        '428': { $ref: '#/components/responses/Problem' }
+  /notes/{id}/publish:
+    parameters:
+      - $ref: '#/components/parameters/NoteId'
+    post:
+      operationId: publishNote
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+        - name: If-Match
+          in: header
+          required: false
+          schema: { type: string }
+      responses:
+        '200':
+          description: Published note (or replayed with Idempotent-Replay true).
+          headers:
+            ETag: { schema: { type: string } }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Note' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '412': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+components:
+  parameters:
+    NoteId:
+      name: id
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      schema: { type: string, format: uuid }
+    IfMatch:
+      name: If-Match
+      in: header
+      required: false
+      description: Required by OCC-3, but declared optional — its absence is 428 (HTTP-9 step 10), not a validation error.
+      schema: { type: string }
+  responses:
+    Problem:
+      description: RFC 9457 problem details (profile ERR-1).
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+  schemas:
+    NoteStatus:
+      type: string
+      enum: [draft, published]
+    Note:
+      type: object
+      required: [id, title, body, status, version, created_at, updated_at]
+      additionalProperties: false
+      properties:
+        id: { type: string, format: uuid }
+        title: { type: string, minLength: 1, maxLength: 100 }
+        body: { type: string, maxLength: 10000 }
+        status: { $ref: '#/components/schemas/NoteStatus' }
+        version: { type: integer, minimum: 1 }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+    NoteCreate:
+      type: object
+      required: [title]
+      additionalProperties: false
+      properties:
+        title: { type: string, minLength: 1, maxLength: 100, example: Groceries }
+        body: { type: string, maxLength: 10000 }
+    NotePatch:
+      type: object
+      additionalProperties: false
+      properties:
+        title: { type: string, minLength: 1, maxLength: 100 }
+        body: { type: string, maxLength: 10000 }
+    NoteList:
+      type: object
+      required: [data, pagination]
+      additionalProperties: false
+      properties:
+        data:
+          type: array
+          items: { $ref: '#/components/schemas/Note' }
+        pagination:
+          type: object
+          required: [next_cursor, has_more]
+          additionalProperties: false
+          properties:
+            next_cursor: { type: [string, 'null'] }
+            has_more: { type: boolean }
+    Problem:
+      type: object
+      required: [type, title, status, detail, instance, code, retryable, errors]
+      additionalProperties: false
+      properties:
+        type: { type: string }
+        title: { type: string }
+        status: { type: integer }
+        detail: { type: string }
+        instance: { type: string }
+        code: { type: string }
+        retryable: { type: boolean }
+        errors:
+          type: array
+          items:
+            type: object
+            required: [in, pointer, issue]
+            additionalProperties: false
+            properties:
+              in: { type: string, enum: [body, query, header] }
+              pointer: { type: string }
+              issue: { type: string }

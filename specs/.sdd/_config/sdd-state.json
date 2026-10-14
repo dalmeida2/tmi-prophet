@@ -1,0 +1,7 @@
+{
+  "lastCompletedStep": 0,
+  "stepName": "Project Initialization",
+  "projectType": "",
+  "timestamp": "",
+  "notes": "Written only by `node specs/.sdd/scripts/sdd.cjs transition` (and the SDD VS Code extension). Lock, gates and evidence live in specs/spec.lock.json and specs/logs/."
+}

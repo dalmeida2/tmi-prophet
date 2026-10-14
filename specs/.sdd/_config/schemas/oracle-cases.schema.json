@@ -1,0 +1,113 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SDD oracle case file (specs/fixtures/cases/*.json)",
+  "description": "Black-box acceptance cases executed by oracle.cjs. See _config/references/oracle-standard.md.",
+  "type": "object",
+  "required": ["suite", "cases"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": { "type": "string" },
+    "suite": { "type": "string", "pattern": "^[a-z][a-z0-9_-]*$" },
+    "description": { "type": "string" },
+    "cases": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/case" } }
+  },
+  "$defs": {
+    "case": {
+      "type": "object",
+      "required": ["id", "title", "steps"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "pattern": "^[A-Z][A-Z0-9]*-[0-9]{3,}$" },
+        "title": { "type": "string", "minLength": 5 },
+        "phase": { "type": "integer", "minimum": 1 },
+        "probe": { "type": "boolean", "description": "Probe cases carry no expectations; they run only in `oracle diff`." },
+        "covers": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^(op|transition|illegal|inv|error|cmd|rule):[A-Za-z0-9_.:-]+$" }
+        },
+        "derivedFrom": {
+          "description": "Where every expected value comes from (SPEC section, contract pointer, invariant). An expectation that cannot be cited is a spec gap.",
+          "type": "array",
+          "items": { "type": "string", "minLength": 3 }
+        },
+        "setup": { "type": "array", "items": { "type": "string" }, "description": "Hook names from oracle.config.json; overrides defaultSetup." },
+        "tags": { "type": "array", "items": { "type": "string" } },
+        "steps": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/step" } }
+      }
+    },
+    "step": {
+      "type": "object",
+      "additionalProperties": false,
+      "anyOf": [{ "required": ["http"] }, { "required": ["query"] }, { "required": ["run"] }, { "required": ["parallel"] }],
+      "properties": {
+        "id": { "type": "string" },
+        "note": { "type": "string" },
+        "http": { "$ref": "#/$defs/http" },
+        "query": { "$ref": "#/$defs/query" },
+        "run": { "$ref": "#/$defs/run" },
+        "parallel": {
+          "description": "HTTP requests sent concurrently. Expectations in expect.responses are matched order-insensitively; `oracle diff` compares responses as a multiset.",
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 8,
+          "items": { "$ref": "#/$defs/http" }
+        },
+        "expect": { "$ref": "#/$defs/expect" },
+        "capture": {
+          "description": "Variable name -> path into the observation (status, headers.x, body.a[0].b, rows[0].c, exitCode, stdout, stdoutJson.a).",
+          "type": "object",
+          "propertyNames": { "pattern": "^[A-Za-z_][A-Za-z0-9_]*$" },
+          "additionalProperties": { "type": "string" }
+        }
+      }
+    },
+    "http": {
+      "type": "object",
+      "required": ["method", "path"],
+      "additionalProperties": false,
+      "properties": {
+        "method": { "enum": ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"] },
+        "path": { "type": "string", "pattern": "^/" },
+        "query": { "type": "object", "additionalProperties": { "type": ["string", "number", "boolean"] } },
+        "headers": { "type": "object", "additionalProperties": { "type": "string" } },
+        "body": {},
+        "rawBody": { "type": "string", "description": "Sent verbatim (e.g. malformed JSON). Mutually exclusive with body." }
+      }
+    },
+    "query": {
+      "type": "object",
+      "required": ["sql"],
+      "additionalProperties": false,
+      "properties": { "sql": { "type": "string", "minLength": 6 } }
+    },
+    "run": {
+      "type": "object",
+      "required": ["cmd"],
+      "additionalProperties": false,
+      "properties": {
+        "cmd": { "type": "string" },
+        "args": { "type": "array", "items": { "type": "string" } },
+        "stdin": { "type": "string" },
+        "env": { "type": "object", "additionalProperties": { "type": "string" } },
+        "timeoutMs": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "expect": {
+      "type": "object",
+      "additionalProperties": false,
+      "minProperties": 1,
+      "properties": {
+        "status": {},
+        "headers": { "type": "object" },
+        "body": {},
+        "bodyMatch": { "enum": ["exact", "subset"] },
+        "rows": {},
+        "exitCode": {},
+        "stdout": {},
+        "stdoutJson": {},
+        "stderr": {},
+        "responses": { "type": "array", "description": "parallel steps: one http expectation per request, any order" }
+      }
+    }
+  }
+}

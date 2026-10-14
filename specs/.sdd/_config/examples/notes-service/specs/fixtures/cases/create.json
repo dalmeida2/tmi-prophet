@@ -1,0 +1,1186 @@
+{
+  "$schema": "../../../../../schemas/oracle-cases.schema.json",
+  "suite": "create",
+  "description": "Phase 2: createNote and getNote.",
+  "cases": [
+    {
+      "id": "NOTE-010",
+      "title": "Create returns 201 with Location, ETag and the full note; read returns the same note",
+      "phase": 2,
+      "covers": [
+        "inv:V1"
+      ],
+      "derivedFrom": [
+        "SPEC §5.1",
+        "openapi createNote 201",
+        "openapi getNote 200",
+        "profile HTTP-1",
+        "profile OCC-1",
+        "profile OCC-2",
+        "profile HTTP-10"
+      ],
+      "steps": [
+        {
+          "http": {
+            "method": "POST",
+            "path": "/notes",
+            "headers": {
+              "Idempotency-Key": "{{$uuid:k1}}"
+            },
+            "body": {
+              "title": "Groceries",
+              "body": "milk, eggs"
+            }
+          },
+          "expect": {
+            "status": 201,
+            "headers": {
+              "content-type": "application/json",
+              "etag": "\"v1\"",
+              "location": {
+                "$regex": "^/notes/[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+              },
+              "idempotent-replay": {
+                "$absent": true
+              }
+            },
+            "body": {
+              "id": {
+                "$type": "uuidv7"
+              },
+              "title": "Groceries",
+              "body": "milk, eggs",
+              "status": "draft",
+              "version": 1,
+              "created_at": {
+                "$type": "datetime"
+              },
+              "updated_at": {
+                "$type": "datetime"
+              }
+            }
+          },
+          "id": "create",
+          "capture": {
+            "noteId": "body.id",
+            "created": "body.created_at"
+          }
+        },
+        {
+          "http": {
+            "method": "GET",
+            "path": "/notes/{{noteId}}"
+          },
+          "expect": {
+            "status": 200,
+            "headers": {
+              "content-type": "application/json",
+              "etag": "\"v1\"",
+              "idempotent-replay": {
+                "$absent": true
+              }
+            },
+            "body": {
+              "id": "{{noteId}}",
+              "title": "Groceries",
+              "body": "milk, eggs",
+              "status": "draft",
+              "version": 1,
+              "created_at": "{{created}}",
+              "updated_at": "{{created}}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "NOTE-011",
+      "title": "Omitted body is stored and returned as empty string",
+      "phase": 2,
+      "derivedFrom": [
+        "SPEC §4",
+        "DEC005",
+        "profile SER-7"
+      ],
+      "steps": [
+        {
+          "http": {
+            "method": "POST",
+            "path": "/notes",
+            "headers": {
+              "Idempotency-Key": "{{$uuid:k1}}"
+            },
+            "body": {
+              "title": "No body"
+            }
+          },
+          "expect": {
+            "status": 201,
+            "headers": {
+              "content-type": "application/json",
+              "etag": "\"v1\"",
+              "location": {
+                "$regex": "^/notes/[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+              },
+              "idempotent-replay": {
+                "$absent": true
+              }
+            },
+            "body": {
+              "id": {
+                "$type": "uuidv7"
+              },
+              "title": "No body",
+              "body": "",
+              "status": "draft",
+              "version": 1,
+              "created_at": {
+                "$type": "datetime"
+              },
+              "updated_at": {
+                "$type": "datetime"
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "NOTE-012",
+      "title": "Title with surrounding whitespace and non-ASCII round-trips unchanged",
+      "phase": 2,
+      "derivedFrom": [
+        "profile SER-9"
+      ],
+      "steps": [
+        {
+          "http": {
+            "method": "POST",
+            "path": "/notes",
+            "headers": {
+              "Idempotency-Key": "{{$uuid:k1}}"
+            },
+            "body": {
+              "title": "  Ünïcødé ✓  "
+            }
+          },
+          "expect": {
+            "status": 201,
+            "headers": {
+              "content-type": "application/json",
+              "etag": "\"v1\"",
+              "location": {
+                "$regex": "^/notes/[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+              },
+              "idempotent-replay": {
+                "$absent": true
+              }
+            },
+            "body": {
+              "id": {
+                "$type": "uuidv7"
+              },
+              "title": "  Ünïcødé ✓  ",
+              "body": "",
+              "status": "draft",
+              "version": 1,
+              "created_at": {
+                "$type": "datetime"
+              },
+              "updated_at": {
+                "$type": "datetime"
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "NOTE-013",
+      "title": "Two body violations are reported together, sorted by pointer",
+      "phase": 2,
+      "derivedFrom": [
+        "profile ERR-3",
+        "profile SER-8",
+        "openapi NoteCreate"
+      ],
+      "steps": [
+        {
+          "http": {
+            "method": "POST",
+            "path": "/notes",
+            "headers": {
+              "Idempotency-Key": "{{$uuid:k1}}"
+            },
+            "body": {
+              "title": "",
+              "extra": 1
+            }
+          },
+          "expect": {
+            "status": 422,
+            "headers": {
+              "content-type": "application/problem+json",
+              "etag": {
+                "$absent": true
+              }
+            },
+            "body": {
+              "type": "https://errors.notes.example/VALIDATION_ERROR",
+              "title": "Validation failed",
+              "status": 422,
+              "detail": {
+                "$type": "string"
+              },
+              "instance": "/notes",
+              "code": "VALIDATION_ERROR",
+              "retryable": false,
+              "errors": [
+                {
+                  "in": "body",
+                  "pointer": "/extra",
+                  "issue": "additionalProperties"
+                },
+                {
+                  "in": "body",
+                  "pointer": "/title",
+                  "issue": "minLength"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "NOTE-014",
+      "title": "Missing Idempotency-Key is reported with body violations in one errors[]",
+      "phase": 2,
+      "derivedFrom": [
+        "profile IDEM-1",
+        "profile HTTP-9",
+        "profile ERR-3"
+      ],
+      "steps": [
+        {
+          "http": {
+            "method": "POST",
+            "path": "/notes",
+            "body": {
+              "title": 5
+            }
+          },
+          "expect": {
+            "status": 422,
+            "headers": {
+              "content-type": "application/problem+json",
+              "etag": {
+                "$absent": true
+              }
+            },
+            "body": {
+              "type": "https://errors.notes.example/VALIDATION_ERROR",
+              "title": "Validation failed",
+              "status": 422,
+              "detail": {
+                "$type": "string"
+              },
+              "instance": "/notes",
+              "code": "VALIDATION_ERROR",
+              "retryable": false,
+              "errors": [
+                {
+                  "in": "body",
+                  "pointer": "/title",
+                  "issue": "type"
+                },
+                {
+                  "in": "header",
+                  "pointer": "idempotency-key",
+                  "issue": "required"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "NOTE-015",
+      "title": "Malformed JSON is 400",
+      "phase": 2,
+      "derivedFrom": [
+        "profile HTTP-9"
+      ],
+      "steps": [
+        {
+          "http": {
+            "method": "POST",
+            "path": "/notes",
+            "headers": {
+              "Idempotency-Key": "{{$uuid:k1}}",
+              "Content-Type": "application/json"
+            },
+            "rawBody": "{"
+          },
+          "expect": {
+            "status": 400,
+            "headers": {
+              "content-type": "application/problem+json",
+              "etag": {
+                "$absent": true
+              }
+            },
+            "body": {
+              "type": "https://errors.notes.example/MALFORMED_REQUEST",
+              "title": "Malformed request",
+              "status": 400,
+              "detail": {
+                "$type": "string"
+              },
+              "instance": "/notes",
+              "code": "MALFORMED_REQUEST",
+              "retryable": false,
+              "errors": []
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "NOTE-016",
+      "title": "Empty body with JSON content type is 400",
+      "phase": 2,
+      "derivedFrom": [
+        "profile HTTP-3"
+      ],
+      "steps": [
+        {
+          "http": {
+            "method": "POST",
+            "path": "/notes",
+            "headers": {
+              "Idempotency-Key": "{{$uuid:k1}}",
+              "Content-Type": "application/json"
+            },
+            "rawBody": ""
+          },
+          "expect": {
+            "status": 400,
+            "headers": {
+              "content-type": "application/problem+json",
+              "etag": {
+                "$absent": true
+              }
+            },
+            "body": {
+              "type": "https://errors.notes.example/MALFORMED_REQUEST",
+              "title": "Malformed request",
+              "status": 400,
+              "detail": {
+                "$type": "string"
+              },
+              "instance": "/notes",
+              "code": "MALFORMED_REQUEST",
+              "retryable": false,
+              "errors": []
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "NOTE-017",
+      "title": "Non-JSON content type is 415",
+      "phase": 2,
+      "derivedFrom": [
+        "profile HTTP-3"
+      ],
+      "steps": [
+        {
+          "http": {
+            "method": "POST",
+            "path": "/notes",
+            "headers": {
+              "Idempotency-Key": "{{$uuid:k1}}",
+              "Content-Type": "text/plain"
+            },
+            "rawBody": "hello"
+          },
+          "expect": {
+            "status": 415,
+            "headers": {
+              "content-type": "application/problem+json",
+              "etag": {
+                "$absent": true
+              }
+            },
+            "body": {
+              "type": "https://errors.notes.example/UNSUPPORTED_MEDIA_TYPE",
+              "title": "Unsupported media type",
+              "status": 415,
+              "detail": {
+                "$type": "string"
+              },
+              "instance": "/notes",
+              "code": "UNSUPPORTED_MEDIA_TYPE",
+              "retryable": false,
+              "errors": []
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "NOTE-018",
+      "title": "Wrong content type wins over a malformed body",
+      "phase": 2,
+      "derivedFrom": [
+        "profile HTTP-9 steps 4-5"
+      ],
+      "steps": [
+        {
+          "http": {
+            "method": "POST",
+            "path": "/notes",
+            "headers": {
+              "Idempotency-Key": "{{$uuid:k1}}",
+              "Content-Type": "text/plain"
+            },
+            "rawBody": "{"
+          },
+          "expect": {
+            "status": 415,
+            "headers": {
+              "content-type": "application/problem+json",
+              "etag": {
+                "$absent": true
+              }
+            },
+            "body": {
+              "type": "https://errors.notes.example/UNSUPPORTED_MEDIA_TYPE",
+              "title": "Unsupported media type",
+              "status": 415,
+              "detail": {
+                "$type": "string"
+              },
+              "instance": "/notes",
+              "code": "UNSUPPORTED_MEDIA_TYPE",
+              "retryable": false,
+              "errors": []
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "NOTE-019",
+      "title": "Title length is counted in code points",
+      "phase": 2,
+      "derivedFrom": [
+        "profile SER-9",
+        "SPEC §13"
+      ],
+      "steps": [
+        {
+          "http": {
+            "method": "POST",
+            "path": "/notes",
+            "headers": {
+              "Idempotency-Key": "{{$uuid:k1}}"
+            },
+            "body": {
+              "title": "😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀"
+            }
+          },
+          "expect": {
+            "status": 201,
+            "headers": {
+              "content-type": "application/json",
+              "etag": "\"v1\"",
+              "location": {
+                "$regex": "^/notes/[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+              },
+              "idempotent-replay": {
+                "$absent": true
+              }
+            },
+            "body": {
+              "id": {
+                "$type": "uuidv7"
+              },
+              "title": "😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀",
+              "body": "",
+              "status": "draft",
+              "version": 1,
+              "created_at": {
+                "$type": "datetime"
+              },
+              "updated_at": {
+                "$type": "datetime"
+              }
+            }
+          }
+        },
+        {
+          "http": {
+            "method": "POST",
+            "path": "/notes",
+            "headers": {
+              "Idempotency-Key": "{{$uuid:k2}}"
+            },
+            "body": {
+              "title": "😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀"
+            }
+          },
+          "expect": {
+            "status": 422,
+            "headers": {
+              "content-type": "application/problem+json",
+              "etag": {
+                "$absent": true
+              }
+            },
+            "body": {
+              "type": "https://errors.notes.example/VALIDATION_ERROR",
+              "title": "Validation failed",
+              "status": 422,
+              "detail": {
+                "$type": "string"
+              },
+              "instance": "/notes",
+              "code": "VALIDATION_ERROR",
+              "retryable": false,
+              "errors": [
+                {
+                  "in": "body",
+                  "pointer": "/title",
+                  "issue": "maxLength"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "NOTE-020",
+      "title": "Replay with the same key returns the stored response and creates nothing",
+      "phase": 2,
+      "covers": [
+        "inv:V4"
+      ],
+      "derivedFrom": [
+        "profile IDEM-6",
+        "SPEC V4"
+      ],
+      "steps": [
+        {
+          "http": {
+            "method": "POST",
+            "path": "/notes",
+            "headers": {
+              "Idempotency-Key": "{{$uuid:k1}}"
+            },
+            "body": {
+              "title": "Once"
+            }
+          },
+          "expect": {
+            "status": 201,
+            "headers": {
+              "content-type": "application/json",
+              "etag": "\"v1\"",
+              "location": {
+                "$regex": "^/notes/[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+              },
+              "idempotent-replay": {
+                "$absent": true
+              }
+            },
+            "body": {
+              "id": {
+                "$type": "uuidv7"
+              },
+              "title": "Once",
+              "body": "",
+              "status": "draft",
+              "version": 1,
+              "created_at": {
+                "$type": "datetime"
+              },
+              "updated_at": {
+                "$type": "datetime"
+              }
+            }
+          },
+          "capture": {
+            "noteId": "body.id",
+            "created": "body.created_at"
+          }
+        },
+        {
+          "http": {
+            "method": "POST",
+            "path": "/notes",
+            "headers": {
+              "Idempotency-Key": "{{$uuid:k1}}"
+            },
+            "body": {
+              "title": "Once"
+            }
+          },
+          "expect": {
+            "status": 201,
+            "headers": {
+              "content-type": "application/json",
+              "etag": "\"v1\"",
+              "location": "/notes/{{noteId}}",
+              "idempotent-replay": "true"
+            },
+            "body": {
+              "id": "{{noteId}}",
+              "title": "Once",
+              "body": "",
+              "status": "draft",
+              "version": 1,
+              "created_at": "{{created}}",
+              "updated_at": "{{created}}"
+            }
+          }
+        },
+        {
+          "http": {
+            "method": "GET",
+            "path": "/notes"
+          },
+          "expect": {
+            "status": 200,
+            "headers": {
+              "content-type": "application/json",
+              "etag": {
+                "$absent": true
+              },
+              "idempotent-replay": {
+                "$absent": true
+              }
+            },
+            "body": {
+              "data": [
+                {
+                  "id": "{{noteId}}",
+                  "title": "Once",
+                  "body": "",
+                  "status": "draft",
+                  "version": 1,
+                  "created_at": "{{created}}",
+                  "updated_at": "{{created}}"
+                }
+              ],
+              "pagination": {
+                "next_cursor": null,
+                "has_more": false
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "NOTE-021",
+      "title": "Same key with a different body is 422 IDEMPOTENCY_KEY_MISMATCH",
+      "phase": 2,
+      "derivedFrom": [
+        "profile IDEM-3",
+        "profile IDEM-4"
+      ],
+      "steps": [
+        {
+          "http": {
+            "method": "POST",
+            "path": "/notes",
+            "headers": {
+              "Idempotency-Key": "{{$uuid:k1}}"
+            },
+            "body": {
+              "title": "A"
+            }
+          },
+          "expect": {
+            "status": 201,
+            "headers": {
+              "content-type": "application/json",
+              "etag": "\"v1\"",
+              "location": {
+                "$regex": "^/notes/[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+              },
+              "idempotent-replay": {
+                "$absent": true
+              }
+            },
+            "body": {
+              "id": {
+                "$type": "uuidv7"
+              },
+              "title": "A",
+              "body": "",
+              "status": "draft",
+              "version": 1,
+              "created_at": {
+                "$type": "datetime"
+              },
+              "updated_at": {
+                "$type": "datetime"
+              }
+            }
+          }
+        },
+        {
+          "http": {
+            "method": "POST",
+            "path": "/notes",
+            "headers": {
+              "Idempotency-Key": "{{$uuid:k1}}"
+            },
+            "body": {
+              "title": "B"
+            }
+          },
+          "expect": {
+            "status": 422,
+            "headers": {
+              "content-type": "application/problem+json",
+              "etag": {
+                "$absent": true
+              }
+            },
+            "body": {
+              "type": "https://errors.notes.example/IDEMPOTENCY_KEY_MISMATCH",
+              "title": "Idempotency key reused with a different request",
+              "status": 422,
+              "detail": {
+                "$type": "string"
+              },
+              "instance": "/notes",
+              "code": "IDEMPOTENCY_KEY_MISMATCH",
+              "retryable": false,
+              "errors": []
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "NOTE-022",
+      "title": "Concurrent requests with one key: one creates, the other is 409 in flight",
+      "phase": 2,
+      "derivedFrom": [
+        "profile IDEM-5",
+        "profile ENV-5"
+      ],
+      "steps": [
+        {
+          "parallel": [
+            {
+              "method": "POST",
+              "path": "/notes",
+              "headers": {
+                "Idempotency-Key": "{{$uuid:k1}}"
+              },
+              "body": {
+                "title": "Race"
+              }
+            },
+            {
+              "method": "POST",
+              "path": "/notes",
+              "headers": {
+                "Idempotency-Key": "{{$uuid:k1}}"
+              },
+              "body": {
+                "title": "Race"
+              }
+            }
+          ],
+          "expect": {
+            "responses": [
+              {
+                "status": 201,
+                "headers": {
+                  "content-type": "application/json",
+                  "etag": "\"v1\"",
+                  "location": {
+                    "$regex": "^/notes/[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+                  },
+                  "idempotent-replay": {
+                    "$absent": true
+                  }
+                },
+                "body": {
+                  "id": {
+                    "$type": "uuidv7"
+                  },
+                  "title": "Race",
+                  "body": "",
+                  "status": "draft",
+                  "version": 1,
+                  "created_at": {
+                    "$type": "datetime"
+                  },
+                  "updated_at": {
+                    "$type": "datetime"
+                  }
+                }
+              },
+              {
+                "status": 409,
+                "headers": {
+                  "content-type": "application/problem+json",
+                  "etag": {
+                    "$absent": true
+                  },
+                  "retry-after": "1"
+                },
+                "body": {
+                  "type": "https://errors.notes.example/IDEMPOTENCY_IN_FLIGHT",
+                  "title": "Request with this idempotency key is in progress",
+                  "status": 409,
+                  "detail": {
+                    "$type": "string"
+                  },
+                  "instance": "/notes",
+                  "code": "IDEMPOTENCY_IN_FLIGHT",
+                  "retryable": true,
+                  "errors": []
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "NOTE-023",
+      "title": "Malformed Idempotency-Key is a format violation",
+      "phase": 2,
+      "derivedFrom": [
+        "profile IDEM-1",
+        "profile ERR-3"
+      ],
+      "steps": [
+        {
+          "http": {
+            "method": "POST",
+            "path": "/notes",
+            "headers": {
+              "Idempotency-Key": "not-a-uuid"
+            },
+            "body": {
+              "title": "x"
+            }
+          },
+          "expect": {
+            "status": 422,
+            "headers": {
+              "content-type": "application/problem+json",
+              "etag": {
+                "$absent": true
+              }
+            },
+            "body": {
+              "type": "https://errors.notes.example/VALIDATION_ERROR",
+              "title": "Validation failed",
+              "status": 422,
+              "detail": {
+                "$type": "string"
+              },
+              "instance": "/notes",
+              "code": "VALIDATION_ERROR",
+              "retryable": false,
+              "errors": [
+                {
+                  "in": "header",
+                  "pointer": "idempotency-key",
+                  "issue": "format"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "NOTE-040",
+      "title": "Unknown note id is 404",
+      "phase": 2,
+      "derivedFrom": [
+        "openapi getNote 404",
+        "profile HTTP-9 step 8"
+      ],
+      "steps": [
+        {
+          "http": {
+            "method": "GET",
+            "path": "/notes/0190a000-0000-7000-8000-00000000ffff"
+          },
+          "expect": {
+            "status": 404,
+            "headers": {
+              "content-type": "application/problem+json",
+              "etag": {
+                "$absent": true
+              }
+            },
+            "body": {
+              "type": "https://errors.notes.example/NOT_FOUND",
+              "title": "Not found",
+              "status": 404,
+              "detail": {
+                "$type": "string"
+              },
+              "instance": "/notes/0190a000-0000-7000-8000-00000000ffff",
+              "code": "NOT_FOUND",
+              "retryable": false,
+              "errors": []
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "NOTE-041",
+      "title": "Malformed note id is 404",
+      "phase": 2,
+      "derivedFrom": [
+        "profile HTTP-9 step 8"
+      ],
+      "steps": [
+        {
+          "http": {
+            "method": "GET",
+            "path": "/notes/not-an-id"
+          },
+          "expect": {
+            "status": 404,
+            "headers": {
+              "content-type": "application/problem+json",
+              "etag": {
+                "$absent": true
+              }
+            },
+            "body": {
+              "type": "https://errors.notes.example/NOT_FOUND",
+              "title": "Not found",
+              "status": 404,
+              "detail": {
+                "$type": "string"
+              },
+              "instance": "/notes/not-an-id",
+              "code": "NOT_FOUND",
+              "retryable": false,
+              "errors": []
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "NOTE-024",
+      "title": "Title in NFD form is stored and returned in NFC",
+      "phase": 2,
+      "derivedFrom": [
+        "profile SER-9"
+      ],
+      "steps": [
+        {
+          "http": {
+            "method": "POST",
+            "path": "/notes",
+            "headers": {
+              "Idempotency-Key": "{{$uuid:k1}}"
+            },
+            "body": {
+              "title": "Café"
+            }
+          },
+          "expect": {
+            "status": 201,
+            "headers": {
+              "content-type": "application/json",
+              "location": {
+                "$regex": "^/notes/[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+              },
+              "etag": "\"v1\"",
+              "idempotent-replay": {
+                "$absent": true
+              }
+            },
+            "body": {
+              "id": {
+                "$type": "uuidv7"
+              },
+              "title": "Café",
+              "body": "",
+              "status": "draft",
+              "version": 1,
+              "created_at": {
+                "$type": "datetime"
+              },
+              "updated_at": {
+                "$type": "datetime"
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "NOTE-025",
+      "title": "Title length is counted after NFC normalization",
+      "phase": 2,
+      "derivedFrom": [
+        "profile SER-9",
+        "SPEC §13"
+      ],
+      "steps": [
+        {
+          "http": {
+            "method": "POST",
+            "path": "/notes",
+            "headers": {
+              "Idempotency-Key": "{{$uuid:k1}}"
+            },
+            "body": {
+              "title": "éééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééé"
+            }
+          },
+          "expect": {
+            "status": 201,
+            "headers": {
+              "content-type": "application/json",
+              "location": {
+                "$regex": "^/notes/[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+              },
+              "etag": "\"v1\"",
+              "idempotent-replay": {
+                "$absent": true
+              }
+            },
+            "body": {
+              "id": {
+                "$type": "uuidv7"
+              },
+              "title": "éééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééé",
+              "body": "",
+              "status": "draft",
+              "version": 1,
+              "created_at": {
+                "$type": "datetime"
+              },
+              "updated_at": {
+                "$type": "datetime"
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "NOTE-026",
+      "title": "Empty Idempotency-Key is treated as absent",
+      "phase": 2,
+      "derivedFrom": [
+        "profile HTTP-11",
+        "profile IDEM-1"
+      ],
+      "steps": [
+        {
+          "http": {
+            "method": "POST",
+            "path": "/notes",
+            "headers": {
+              "Idempotency-Key": ""
+            },
+            "body": {
+              "title": "x"
+            }
+          },
+          "expect": {
+            "status": 422,
+            "headers": {
+              "content-type": "application/problem+json",
+              "etag": {
+                "$absent": true
+              }
+            },
+            "body": {
+              "type": "https://errors.notes.example/VALIDATION_ERROR",
+              "title": "Validation failed",
+              "status": 422,
+              "detail": {
+                "$type": "string"
+              },
+              "instance": "/notes",
+              "code": "VALIDATION_ERROR",
+              "retryable": false,
+              "errors": [
+                {
+                  "in": "header",
+                  "pointer": "idempotency-key",
+                  "issue": "required"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "NOTE-042",
+      "title": "Unknown query parameter on getNote is 422 before the lookup",
+      "phase": 2,
+      "derivedFrom": [
+        "profile SER-8",
+        "profile HTTP-9 steps 6-8"
+      ],
+      "steps": [
+        {
+          "http": {
+            "method": "GET",
+            "path": "/notes/0190a000-0000-7000-8000-00000000ffff",
+            "query": {
+              "expand": "all"
+            }
+          },
+          "expect": {
+            "status": 422,
+            "headers": {
+              "content-type": "application/problem+json",
+              "etag": {
+                "$absent": true
+              }
+            },
+            "body": {
+              "type": "https://errors.notes.example/VALIDATION_ERROR",
+              "title": "Validation failed",
+              "status": 422,
+              "detail": {
+                "$type": "string"
+              },
+              "instance": "/notes/0190a000-0000-7000-8000-00000000ffff",
+              "code": "VALIDATION_ERROR",
+              "retryable": false,
+              "errors": [
+                {
+                  "in": "query",
+                  "pointer": "expand",
+                  "issue": "additionalProperties"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

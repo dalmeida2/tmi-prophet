@@ -1,0 +1,53 @@
+{
+  "$schema": "../../../../schemas/oracle-config.schema.json",
+  "targets": {
+    "default": {
+      "baseUrl": "${ORACLE_DEFAULT_URL:-http://127.0.0.1:3000}",
+      "env": {
+        "DATABASE_URL": "${ORACLE_DEFAULT_DATABASE_URL:-postgres://localhost:5432/notes_oracle}"
+      }
+    },
+    "a": {
+      "baseUrl": "${ORACLE_A_URL}",
+      "env": {
+        "DATABASE_URL": "${ORACLE_A_DATABASE_URL}"
+      }
+    },
+    "b": {
+      "baseUrl": "${ORACLE_B_URL}",
+      "env": {
+        "DATABASE_URL": "${ORACLE_B_DATABASE_URL}"
+      }
+    }
+  },
+  "defaultSetup": [
+    "reset"
+  ],
+  "hooks": {
+    "reset": {
+      "cmd": "sh",
+      "args": [
+        "-c",
+        "psql \"$DATABASE_URL\" -q -v ON_ERROR_STOP=1 -c 'TRUNCATE notes, idempotency_keys'"
+      ]
+    }
+  },
+  "readiness": {
+    "http": {
+      "path": "/healthz"
+    },
+    "timeoutMs": 30000
+  },
+  "buildEnv": {
+    "TZ": "UTC",
+    "SDD_MUTATION_DELAY_MS": "150",
+    "SDD_TIMESTAMP_GRANULARITY_MS": "60000"
+  },
+  "variablePaths": [
+    "$..id",
+    "$..created_at",
+    "$..updated_at",
+    "$.detail",
+    "$.pagination.next_cursor"
+  ]
+}

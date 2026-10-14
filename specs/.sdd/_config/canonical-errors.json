@@ -1,0 +1,21 @@
+{
+  "description": "Canonical HTTP error codes of the Equivalence Profile (systems-standards.md §3-§6). If a project's errors.json contains one of these codes, its status and retryable values must match exactly. 'mandatory' codes must exist in every project with the http interface.",
+  "codes": {
+    "MALFORMED_REQUEST":        { "status": 400, "retryable": false, "mandatory": true,  "rule": "HTTP-9" },
+    "UNAUTHENTICATED":          { "status": 401, "retryable": false, "mandatory": false, "rule": "HTTP-9" },
+    "PERMISSION_DENIED":        { "status": 403, "retryable": false, "mandatory": false, "rule": "HTTP-9" },
+    "NOT_FOUND":                { "status": 404, "retryable": false, "mandatory": true,  "rule": "HTTP-9" },
+    "METHOD_NOT_ALLOWED":       { "status": 405, "retryable": false, "mandatory": true,  "rule": "HTTP-5" },
+    "RESOURCE_CONFLICT":        { "status": 409, "retryable": false, "mandatory": false, "rule": "HTTP-9" },
+    "INVALID_STATE_TRANSITION": { "status": 409, "retryable": false, "mandatory": false, "rule": "HTTP-9" },
+    "IDEMPOTENCY_IN_FLIGHT":    { "status": 409, "retryable": true,  "mandatory": false, "rule": "IDEM-5" },
+    "PRECONDITION_FAILED":      { "status": 412, "retryable": false, "mandatory": false, "rule": "OCC-3" },
+    "UNSUPPORTED_MEDIA_TYPE":   { "status": 415, "retryable": false, "mandatory": true,  "rule": "HTTP-3" },
+    "VALIDATION_ERROR":         { "status": 422, "retryable": false, "mandatory": true,  "rule": "HTTP-9" },
+    "IDEMPOTENCY_KEY_MISMATCH": { "status": 422, "retryable": false, "mandatory": false, "rule": "IDEM-4" },
+    "PRECONDITION_REQUIRED":    { "status": 428, "retryable": false, "mandatory": false, "rule": "OCC-3" },
+    "RATE_LIMITED":             { "status": 429, "retryable": true,  "mandatory": false, "rule": "RATE-1" },
+    "INTERNAL_ERROR":           { "status": 500, "retryable": false, "mandatory": true,  "rule": "HTTP-9" },
+    "SERVICE_UNAVAILABLE":      { "status": 503, "retryable": true,  "mandatory": false, "rule": "RES-4" }
+  }
+}

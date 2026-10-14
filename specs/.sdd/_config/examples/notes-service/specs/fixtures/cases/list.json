@@ -1,0 +1,659 @@
+{
+  "$schema": "../../../../../schemas/oracle-cases.schema.json",
+  "suite": "list",
+  "description": "Phase 3: listNotes.",
+  "cases": [
+    {
+      "id": "NOTE-030",
+      "title": "Pages are newest first, ties on created_at break by id, and next_cursor visits every note once",
+      "phase": 3,
+      "covers": [
+        "inv:V3"
+      ],
+      "derivedFrom": [
+        "SPEC V3",
+        "profile ENV-6",
+        "profile PAGE-1",
+        "profile PAGE-2",
+        "profile PAGE-3",
+        "profile PAGE-4",
+        "profile SER-3"
+      ],
+      "steps": [
+        {
+          "http": {
+            "method": "POST",
+            "path": "/notes",
+            "headers": {
+              "Idempotency-Key": "{{$uuid:ka}}"
+            },
+            "body": {
+              "title": "A"
+            }
+          },
+          "expect": {
+            "status": 201,
+            "headers": {
+              "content-type": "application/json",
+              "etag": "\"v1\"",
+              "location": {
+                "$regex": "^/notes/[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+              },
+              "idempotent-replay": {
+                "$absent": true
+              }
+            },
+            "body": {
+              "id": {
+                "$type": "uuidv7"
+              },
+              "title": "A",
+              "body": "",
+              "status": "draft",
+              "version": 1,
+              "created_at": {
+                "$type": "datetime"
+              },
+              "updated_at": {
+                "$type": "datetime"
+              }
+            }
+          },
+          "capture": {
+            "a": "body.id"
+          }
+        },
+        {
+          "http": {
+            "method": "POST",
+            "path": "/notes",
+            "headers": {
+              "Idempotency-Key": "{{$uuid:kb}}"
+            },
+            "body": {
+              "title": "B"
+            }
+          },
+          "expect": {
+            "status": 201,
+            "headers": {
+              "content-type": "application/json",
+              "etag": "\"v1\"",
+              "location": {
+                "$regex": "^/notes/[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+              },
+              "idempotent-replay": {
+                "$absent": true
+              }
+            },
+            "body": {
+              "id": {
+                "$type": "uuidv7"
+              },
+              "title": "B",
+              "body": "",
+              "status": "draft",
+              "version": 1,
+              "created_at": {
+                "$type": "datetime"
+              },
+              "updated_at": {
+                "$type": "datetime"
+              }
+            }
+          },
+          "capture": {
+            "b": "body.id"
+          }
+        },
+        {
+          "http": {
+            "method": "POST",
+            "path": "/notes",
+            "headers": {
+              "Idempotency-Key": "{{$uuid:kc}}"
+            },
+            "body": {
+              "title": "C"
+            }
+          },
+          "expect": {
+            "status": 201,
+            "headers": {
+              "content-type": "application/json",
+              "etag": "\"v1\"",
+              "location": {
+                "$regex": "^/notes/[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+              },
+              "idempotent-replay": {
+                "$absent": true
+              }
+            },
+            "body": {
+              "id": {
+                "$type": "uuidv7"
+              },
+              "title": "C",
+              "body": "",
+              "status": "draft",
+              "version": 1,
+              "created_at": {
+                "$type": "datetime"
+              },
+              "updated_at": {
+                "$type": "datetime"
+              }
+            }
+          },
+          "capture": {
+            "c": "body.id"
+          }
+        },
+        {
+          "http": {
+            "method": "GET",
+            "path": "/notes",
+            "query": {
+              "limit": 2
+            }
+          },
+          "expect": {
+            "status": 200,
+            "headers": {
+              "content-type": "application/json",
+              "etag": {
+                "$absent": true
+              },
+              "idempotent-replay": {
+                "$absent": true
+              }
+            },
+            "body": {
+              "data": [
+                {
+                  "id": "{{c}}",
+                  "title": "C",
+                  "body": "",
+                  "status": "draft",
+                  "version": 1,
+                  "created_at": {
+                    "$type": "datetime"
+                  },
+                  "updated_at": {
+                    "$type": "datetime"
+                  }
+                },
+                {
+                  "id": "{{b}}",
+                  "title": "B",
+                  "body": "",
+                  "status": "draft",
+                  "version": 1,
+                  "created_at": {
+                    "$type": "datetime"
+                  },
+                  "updated_at": {
+                    "$type": "datetime"
+                  }
+                }
+              ],
+              "pagination": {
+                "next_cursor": {
+                  "$type": "string"
+                },
+                "has_more": true
+              }
+            }
+          },
+          "capture": {
+            "cur": "body.pagination.next_cursor"
+          }
+        },
+        {
+          "http": {
+            "method": "GET",
+            "path": "/notes",
+            "query": {
+              "limit": 2,
+              "cursor": "{{cur}}"
+            }
+          },
+          "expect": {
+            "status": 200,
+            "headers": {
+              "content-type": "application/json",
+              "etag": {
+                "$absent": true
+              },
+              "idempotent-replay": {
+                "$absent": true
+              }
+            },
+            "body": {
+              "data": [
+                {
+                  "id": "{{a}}",
+                  "title": "A",
+                  "body": "",
+                  "status": "draft",
+                  "version": 1,
+                  "created_at": {
+                    "$type": "datetime"
+                  },
+                  "updated_at": {
+                    "$type": "datetime"
+                  }
+                }
+              ],
+              "pagination": {
+                "next_cursor": null,
+                "has_more": false
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "NOTE-032",
+      "title": "Out-of-range or non-integer limit is 422",
+      "phase": 3,
+      "derivedFrom": [
+        "profile PAGE-1",
+        "profile ERR-3"
+      ],
+      "steps": [
+        {
+          "http": {
+            "method": "GET",
+            "path": "/notes",
+            "query": {
+              "limit": 0
+            }
+          },
+          "expect": {
+            "status": 422,
+            "headers": {
+              "content-type": "application/problem+json",
+              "etag": {
+                "$absent": true
+              }
+            },
+            "body": {
+              "type": "https://errors.notes.example/VALIDATION_ERROR",
+              "title": "Validation failed",
+              "status": 422,
+              "detail": {
+                "$type": "string"
+              },
+              "instance": "/notes",
+              "code": "VALIDATION_ERROR",
+              "retryable": false,
+              "errors": [
+                {
+                  "in": "query",
+                  "pointer": "limit",
+                  "issue": "minimum"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "http": {
+            "method": "GET",
+            "path": "/notes",
+            "query": {
+              "limit": 101
+            }
+          },
+          "expect": {
+            "status": 422,
+            "headers": {
+              "content-type": "application/problem+json",
+              "etag": {
+                "$absent": true
+              }
+            },
+            "body": {
+              "type": "https://errors.notes.example/VALIDATION_ERROR",
+              "title": "Validation failed",
+              "status": 422,
+              "detail": {
+                "$type": "string"
+              },
+              "instance": "/notes",
+              "code": "VALIDATION_ERROR",
+              "retryable": false,
+              "errors": [
+                {
+                  "in": "query",
+                  "pointer": "limit",
+                  "issue": "maximum"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "http": {
+            "method": "GET",
+            "path": "/notes",
+            "query": {
+              "limit": "abc"
+            }
+          },
+          "expect": {
+            "status": 422,
+            "headers": {
+              "content-type": "application/problem+json",
+              "etag": {
+                "$absent": true
+              }
+            },
+            "body": {
+              "type": "https://errors.notes.example/VALIDATION_ERROR",
+              "title": "Validation failed",
+              "status": 422,
+              "detail": {
+                "$type": "string"
+              },
+              "instance": "/notes",
+              "code": "VALIDATION_ERROR",
+              "retryable": false,
+              "errors": [
+                {
+                  "in": "query",
+                  "pointer": "limit",
+                  "issue": "type"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "NOTE-033",
+      "title": "Unknown query parameter is 422",
+      "phase": 3,
+      "derivedFrom": [
+        "profile SER-8"
+      ],
+      "steps": [
+        {
+          "http": {
+            "method": "GET",
+            "path": "/notes",
+            "query": {
+              "sort": "title"
+            }
+          },
+          "expect": {
+            "status": 422,
+            "headers": {
+              "content-type": "application/problem+json",
+              "etag": {
+                "$absent": true
+              }
+            },
+            "body": {
+              "type": "https://errors.notes.example/VALIDATION_ERROR",
+              "title": "Validation failed",
+              "status": 422,
+              "detail": {
+                "$type": "string"
+              },
+              "instance": "/notes",
+              "code": "VALIDATION_ERROR",
+              "retryable": false,
+              "errors": [
+                {
+                  "in": "query",
+                  "pointer": "sort",
+                  "issue": "additionalProperties"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "NOTE-034",
+      "title": "Invalid cursor is 422 format",
+      "phase": 3,
+      "derivedFrom": [
+        "profile PAGE-1"
+      ],
+      "steps": [
+        {
+          "http": {
+            "method": "GET",
+            "path": "/notes",
+            "query": {
+              "cursor": "!!"
+            }
+          },
+          "expect": {
+            "status": 422,
+            "headers": {
+              "content-type": "application/problem+json",
+              "etag": {
+                "$absent": true
+              }
+            },
+            "body": {
+              "type": "https://errors.notes.example/VALIDATION_ERROR",
+              "title": "Validation failed",
+              "status": 422,
+              "detail": {
+                "$type": "string"
+              },
+              "instance": "/notes",
+              "code": "VALIDATION_ERROR",
+              "retryable": false,
+              "errors": [
+                {
+                  "in": "query",
+                  "pointer": "cursor",
+                  "issue": "format"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "NOTE-035",
+      "title": "Empty collection is an empty page",
+      "phase": 3,
+      "derivedFrom": [
+        "profile SER-7",
+        "profile PAGE-2"
+      ],
+      "steps": [
+        {
+          "http": {
+            "method": "GET",
+            "path": "/notes"
+          },
+          "expect": {
+            "status": 200,
+            "headers": {
+              "content-type": "application/json",
+              "etag": {
+                "$absent": true
+              },
+              "idempotent-replay": {
+                "$absent": true
+              }
+            },
+            "body": {
+              "data": [],
+              "pagination": {
+                "next_cursor": null,
+                "has_more": false
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "NOTE-036",
+      "title": "A page that ends exactly at the last note has no next cursor",
+      "phase": 3,
+      "covers": [
+        "inv:V3"
+      ],
+      "derivedFrom": [
+        "profile PAGE-2"
+      ],
+      "steps": [
+        {
+          "http": {
+            "method": "POST",
+            "path": "/notes",
+            "headers": {
+              "Idempotency-Key": "{{$uuid:ka}}"
+            },
+            "body": {
+              "title": "A"
+            }
+          },
+          "expect": {
+            "status": 201,
+            "headers": {
+              "content-type": "application/json",
+              "location": {
+                "$regex": "^/notes/[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+              },
+              "etag": "\"v1\"",
+              "idempotent-replay": {
+                "$absent": true
+              }
+            },
+            "body": {
+              "id": {
+                "$type": "uuidv7"
+              },
+              "title": "A",
+              "body": "",
+              "status": "draft",
+              "version": 1,
+              "created_at": {
+                "$type": "datetime"
+              },
+              "updated_at": {
+                "$type": "datetime"
+              }
+            }
+          },
+          "capture": {
+            "a": "body.id"
+          }
+        },
+        {
+          "http": {
+            "method": "POST",
+            "path": "/notes",
+            "headers": {
+              "Idempotency-Key": "{{$uuid:kb}}"
+            },
+            "body": {
+              "title": "B"
+            }
+          },
+          "expect": {
+            "status": 201,
+            "headers": {
+              "content-type": "application/json",
+              "location": {
+                "$regex": "^/notes/[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+              },
+              "etag": "\"v1\"",
+              "idempotent-replay": {
+                "$absent": true
+              }
+            },
+            "body": {
+              "id": {
+                "$type": "uuidv7"
+              },
+              "title": "B",
+              "body": "",
+              "status": "draft",
+              "version": 1,
+              "created_at": {
+                "$type": "datetime"
+              },
+              "updated_at": {
+                "$type": "datetime"
+              }
+            }
+          },
+          "capture": {
+            "b": "body.id"
+          }
+        },
+        {
+          "http": {
+            "method": "GET",
+            "path": "/notes",
+            "query": {
+              "limit": 2
+            }
+          },
+          "expect": {
+            "status": 200,
+            "headers": {
+              "content-type": "application/json",
+              "etag": {
+                "$absent": true
+              },
+              "idempotent-replay": {
+                "$absent": true
+              }
+            },
+            "body": {
+              "data": [
+                {
+                  "id": "{{b}}",
+                  "title": "B",
+                  "body": "",
+                  "status": "draft",
+                  "version": 1,
+                  "created_at": {
+                    "$type": "datetime"
+                  },
+                  "updated_at": {
+                    "$type": "datetime"
+                  }
+                },
+                {
+                  "id": "{{a}}",
+                  "title": "A",
+                  "body": "",
+                  "status": "draft",
+                  "version": 1,
+                  "created_at": {
+                    "$type": "datetime"
+                  },
+                  "updated_at": {
+                    "$type": "datetime"
+                  }
+                }
+              ],
+              "pagination": {
+                "next_cursor": null,
+                "has_more": false
+              }
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,194 @@
+{
+  "$schema": "../../../../../schemas/oracle-cases.schema.json",
+  "suite": "skeleton",
+  "description": "Phase 1: health, routing, 404/405.",
+  "cases": [
+    {
+      "id": "NOTE-001",
+      "title": "Health endpoint answers ok",
+      "phase": 1,
+      "derivedFrom": [
+        "profile HTTP-6",
+        "openapi getHealth 200"
+      ],
+      "steps": [
+        {
+          "http": {
+            "method": "GET",
+            "path": "/healthz"
+          },
+          "expect": {
+            "status": 200,
+            "headers": {
+              "content-type": "application/json"
+            },
+            "body": {
+              "status": "ok"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "NOTE-002",
+      "title": "Undeclared method is 405 with Allow listing declared methods",
+      "phase": 1,
+      "derivedFrom": [
+        "profile HTTP-5",
+        "openapi /notes methods"
+      ],
+      "steps": [
+        {
+          "http": {
+            "method": "DELETE",
+            "path": "/notes"
+          },
+          "expect": {
+            "status": 405,
+            "headers": {
+              "content-type": "application/problem+json",
+              "etag": {
+                "$absent": true
+              },
+              "allow": "GET, POST"
+            },
+            "body": {
+              "type": "https://errors.notes.example/METHOD_NOT_ALLOWED",
+              "title": "Method not allowed",
+              "status": 405,
+              "detail": {
+                "$type": "string"
+              },
+              "instance": "/notes",
+              "code": "METHOD_NOT_ALLOWED",
+              "retryable": false,
+              "errors": []
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "NOTE-003",
+      "title": "Unknown path is 404",
+      "phase": 1,
+      "derivedFrom": [
+        "profile HTTP-5",
+        "profile ERR-1"
+      ],
+      "steps": [
+        {
+          "http": {
+            "method": "GET",
+            "path": "/nope"
+          },
+          "expect": {
+            "status": 404,
+            "headers": {
+              "content-type": "application/problem+json",
+              "etag": {
+                "$absent": true
+              }
+            },
+            "body": {
+              "type": "https://errors.notes.example/NOT_FOUND",
+              "title": "Not found",
+              "status": 404,
+              "detail": {
+                "$type": "string"
+              },
+              "instance": "/nope",
+              "code": "NOT_FOUND",
+              "retryable": false,
+              "errors": []
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "NOTE-004",
+      "title": "Trailing-slash variant is 404",
+      "phase": 1,
+      "derivedFrom": [
+        "profile HTTP-4"
+      ],
+      "steps": [
+        {
+          "http": {
+            "method": "GET",
+            "path": "/notes/"
+          },
+          "expect": {
+            "status": 404,
+            "headers": {
+              "content-type": "application/problem+json",
+              "etag": {
+                "$absent": true
+              }
+            },
+            "body": {
+              "type": "https://errors.notes.example/NOT_FOUND",
+              "title": "Not found",
+              "status": 404,
+              "detail": {
+                "$type": "string"
+              },
+              "instance": "/notes/",
+              "code": "NOT_FOUND",
+              "retryable": false,
+              "errors": []
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "NOTE-005",
+      "title": "Unknown query parameter on the health endpoint is 422",
+      "phase": 1,
+      "derivedFrom": [
+        "profile SER-8",
+        "profile HTTP-6"
+      ],
+      "steps": [
+        {
+          "http": {
+            "method": "GET",
+            "path": "/healthz",
+            "query": {
+              "verbose": "1"
+            }
+          },
+          "expect": {
+            "status": 422,
+            "headers": {
+              "content-type": "application/problem+json",
+              "etag": {
+                "$absent": true
+              }
+            },
+            "body": {
+              "type": "https://errors.notes.example/VALIDATION_ERROR",
+              "title": "Validation failed",
+              "status": 422,
+              "detail": {
+                "$type": "string"
+              },
+              "instance": "/healthz",
+              "code": "VALIDATION_ERROR",
+              "retryable": false,
+              "errors": [
+                {
+                  "in": "query",
+                  "pointer": "verbose",
+                  "issue": "additionalProperties"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

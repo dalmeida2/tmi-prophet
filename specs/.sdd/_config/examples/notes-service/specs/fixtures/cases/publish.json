@@ -1,0 +1,954 @@
+{
+  "$schema": "../../../../../schemas/oracle-cases.schema.json",
+  "suite": "publish",
+  "description": "Phase 5: publishNote, and rules that need published notes.",
+  "cases": [
+    {
+      "id": "NOTE-060",
+      "title": "Publishing a draft moves it to published and bumps version",
+      "phase": 5,
+      "covers": [
+        "transition:note.publish",
+        "inv:V1"
+      ],
+      "derivedFrom": [
+        "statecharts note.publish",
+        "profile OCC-1"
+      ],
+      "steps": [
+        {
+          "http": {
+            "method": "POST",
+            "path": "/notes",
+            "headers": {
+              "Idempotency-Key": "{{$uuid:k1}}"
+            },
+            "body": {
+              "title": "Groceries"
+            }
+          },
+          "expect": {
+            "status": 201,
+            "headers": {
+              "content-type": "application/json",
+              "etag": "\"v1\"",
+              "location": {
+                "$regex": "^/notes/[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+              },
+              "idempotent-replay": {
+                "$absent": true
+              }
+            },
+            "body": {
+              "id": {
+                "$type": "uuidv7"
+              },
+              "title": "Groceries",
+              "body": "",
+              "status": "draft",
+              "version": 1,
+              "created_at": {
+                "$type": "datetime"
+              },
+              "updated_at": {
+                "$type": "datetime"
+              }
+            }
+          },
+          "capture": {
+            "noteId": "body.id",
+            "created": "body.created_at"
+          }
+        },
+        {
+          "http": {
+            "method": "POST",
+            "path": "/notes/{{noteId}}/publish",
+            "headers": {
+              "Idempotency-Key": "{{$uuid:p1}}"
+            }
+          },
+          "expect": {
+            "status": 200,
+            "headers": {
+              "content-type": "application/json",
+              "etag": "\"v2\"",
+              "idempotent-replay": {
+                "$absent": true
+              }
+            },
+            "body": {
+              "id": "{{noteId}}",
+              "title": "Groceries",
+              "body": "",
+              "status": "published",
+              "version": 2,
+              "created_at": "{{created}}",
+              "updated_at": {
+                "$type": "datetime"
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "NOTE-061",
+      "title": "Publishing a published note is an illegal transition",
+      "phase": 5,
+      "covers": [
+        "illegal:note"
+      ],
+      "derivedFrom": [
+        "statecharts illegalTransitionError"
+      ],
+      "steps": [
+        {
+          "http": {
+            "method": "POST",
+            "path": "/notes",
+            "headers": {
+              "Idempotency-Key": "{{$uuid:k1}}"
+            },
+            "body": {
+              "title": "Groceries"
+            }
+          },
+          "expect": {
+            "status": 201,
+            "headers": {
+              "content-type": "application/json",
+              "etag": "\"v1\"",
+              "location": {
+                "$regex": "^/notes/[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+              },
+              "idempotent-replay": {
+                "$absent": true
+              }
+            },
+            "body": {
+              "id": {
+                "$type": "uuidv7"
+              },
+              "title": "Groceries",
+              "body": "",
+              "status": "draft",
+              "version": 1,
+              "created_at": {
+                "$type": "datetime"
+              },
+              "updated_at": {
+                "$type": "datetime"
+              }
+            }
+          },
+          "capture": {
+            "noteId": "body.id",
+            "created": "body.created_at"
+          }
+        },
+        {
+          "http": {
+            "method": "POST",
+            "path": "/notes/{{noteId}}/publish",
+            "headers": {
+              "Idempotency-Key": "{{$uuid:p1}}"
+            }
+          },
+          "expect": {
+            "status": 200
+          }
+        },
+        {
+          "http": {
+            "method": "POST",
+            "path": "/notes/{{noteId}}/publish",
+            "headers": {
+              "Idempotency-Key": "{{$uuid:p2}}"
+            }
+          },
+          "expect": {
+            "status": 409,
+            "headers": {
+              "content-type": "application/problem+json",
+              "etag": {
+                "$absent": true
+              }
+            },
+            "body": {
+              "type": "https://errors.notes.example/INVALID_STATE_TRANSITION",
+              "title": "Invalid state transition",
+              "status": 409,
+              "detail": {
+                "$type": "string"
+              },
+              "instance": "/notes/{{noteId}}/publish",
+              "code": "INVALID_STATE_TRANSITION",
+              "retryable": false,
+              "errors": []
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "NOTE-062",
+      "title": "Replaying a publish returns the stored response",
+      "phase": 5,
+      "derivedFrom": [
+        "profile IDEM-6"
+      ],
+      "steps": [
+        {
+          "http": {
+            "method": "POST",
+            "path": "/notes",
+            "headers": {
+              "Idempotency-Key": "{{$uuid:k1}}"
+            },
+            "body": {
+              "title": "Groceries"
+            }
+          },
+          "expect": {
+            "status": 201,
+            "headers": {
+              "content-type": "application/json",
+              "etag": "\"v1\"",
+              "location": {
+                "$regex": "^/notes/[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+              },
+              "idempotent-replay": {
+                "$absent": true
+              }
+            },
+            "body": {
+              "id": {
+                "$type": "uuidv7"
+              },
+              "title": "Groceries",
+              "body": "",
+              "status": "draft",
+              "version": 1,
+              "created_at": {
+                "$type": "datetime"
+              },
+              "updated_at": {
+                "$type": "datetime"
+              }
+            }
+          },
+          "capture": {
+            "noteId": "body.id",
+            "created": "body.created_at"
+          }
+        },
+        {
+          "http": {
+            "method": "POST",
+            "path": "/notes/{{noteId}}/publish",
+            "headers": {
+              "Idempotency-Key": "{{$uuid:p1}}"
+            }
+          },
+          "expect": {
+            "status": 200,
+            "headers": {
+              "content-type": "application/json",
+              "etag": "\"v2\"",
+              "idempotent-replay": {
+                "$absent": true
+              }
+            },
+            "body": {
+              "id": "{{noteId}}",
+              "title": "Groceries",
+              "body": "",
+              "status": "published",
+              "version": 2,
+              "created_at": "{{created}}",
+              "updated_at": {
+                "$type": "datetime"
+              }
+            }
+          }
+        },
+        {
+          "http": {
+            "method": "POST",
+            "path": "/notes/{{noteId}}/publish",
+            "headers": {
+              "Idempotency-Key": "{{$uuid:p1}}"
+            }
+          },
+          "expect": {
+            "status": 200,
+            "headers": {
+              "content-type": "application/json",
+              "etag": "\"v2\"",
+              "idempotent-replay": "true"
+            },
+            "body": {
+              "id": "{{noteId}}",
+              "title": "Groceries",
+              "body": "",
+              "status": "published",
+              "version": 2,
+              "created_at": "{{created}}",
+              "updated_at": {
+                "$type": "datetime"
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "NOTE-063",
+      "title": "Publishing an unknown note is 404",
+      "phase": 5,
+      "derivedFrom": [
+        "openapi publishNote 404"
+      ],
+      "steps": [
+        {
+          "http": {
+            "method": "POST",
+            "path": "/notes/0190a000-0000-7000-8000-00000000ffff/publish",
+            "headers": {
+              "Idempotency-Key": "{{$uuid:p1}}"
+            }
+          },
+          "expect": {
+            "status": 404,
+            "headers": {
+              "content-type": "application/problem+json",
+              "etag": {
+                "$absent": true
+              }
+            },
+            "body": {
+              "type": "https://errors.notes.example/NOT_FOUND",
+              "title": "Not found",
+              "status": 404,
+              "detail": {
+                "$type": "string"
+              },
+              "instance": "/notes/0190a000-0000-7000-8000-00000000ffff/publish",
+              "code": "NOT_FOUND",
+              "retryable": false,
+              "errors": []
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "NOTE-064",
+      "title": "Publish without Idempotency-Key is 422",
+      "phase": 5,
+      "derivedFrom": [
+        "profile IDEM-1"
+      ],
+      "steps": [
+        {
+          "http": {
+            "method": "POST",
+            "path": "/notes",
+            "headers": {
+              "Idempotency-Key": "{{$uuid:k1}}"
+            },
+            "body": {
+              "title": "Groceries"
+            }
+          },
+          "expect": {
+            "status": 201,
+            "headers": {
+              "content-type": "application/json",
+              "etag": "\"v1\"",
+              "location": {
+                "$regex": "^/notes/[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+              },
+              "idempotent-replay": {
+                "$absent": true
+              }
+            },
+            "body": {
+              "id": {
+                "$type": "uuidv7"
+              },
+              "title": "Groceries",
+              "body": "",
+              "status": "draft",
+              "version": 1,
+              "created_at": {
+                "$type": "datetime"
+              },
+              "updated_at": {
+                "$type": "datetime"
+              }
+            }
+          },
+          "capture": {
+            "noteId": "body.id",
+            "created": "body.created_at"
+          }
+        },
+        {
+          "http": {
+            "method": "POST",
+            "path": "/notes/{{noteId}}/publish"
+          },
+          "expect": {
+            "status": 422,
+            "headers": {
+              "content-type": "application/problem+json",
+              "etag": {
+                "$absent": true
+              }
+            },
+            "body": {
+              "type": "https://errors.notes.example/VALIDATION_ERROR",
+              "title": "Validation failed",
+              "status": 422,
+              "detail": {
+                "$type": "string"
+              },
+              "instance": "/notes/{{noteId}}/publish",
+              "code": "VALIDATION_ERROR",
+              "retryable": false,
+              "errors": [
+                {
+                  "in": "header",
+                  "pointer": "idempotency-key",
+                  "issue": "required"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "NOTE-065",
+      "title": "Optional If-Match on publish is enforced when present",
+      "phase": 5,
+      "derivedFrom": [
+        "profile OCC-3",
+        "SPEC §5.2"
+      ],
+      "steps": [
+        {
+          "http": {
+            "method": "POST",
+            "path": "/notes",
+            "headers": {
+              "Idempotency-Key": "{{$uuid:k1}}"
+            },
+            "body": {
+              "title": "Groceries"
+            }
+          },
+          "expect": {
+            "status": 201,
+            "headers": {
+              "content-type": "application/json",
+              "etag": "\"v1\"",
+              "location": {
+                "$regex": "^/notes/[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+              },
+              "idempotent-replay": {
+                "$absent": true
+              }
+            },
+            "body": {
+              "id": {
+                "$type": "uuidv7"
+              },
+              "title": "Groceries",
+              "body": "",
+              "status": "draft",
+              "version": 1,
+              "created_at": {
+                "$type": "datetime"
+              },
+              "updated_at": {
+                "$type": "datetime"
+              }
+            }
+          },
+          "capture": {
+            "noteId": "body.id",
+            "created": "body.created_at"
+          }
+        },
+        {
+          "http": {
+            "method": "POST",
+            "path": "/notes/{{noteId}}/publish",
+            "headers": {
+              "Idempotency-Key": "{{$uuid:p1}}",
+              "If-Match": "\"v7\""
+            }
+          },
+          "expect": {
+            "status": 412,
+            "headers": {
+              "content-type": "application/problem+json",
+              "etag": {
+                "$absent": true
+              }
+            },
+            "body": {
+              "type": "https://errors.notes.example/PRECONDITION_FAILED",
+              "title": "Precondition failed",
+              "status": 412,
+              "detail": {
+                "$type": "string"
+              },
+              "instance": "/notes/{{noteId}}/publish",
+              "code": "PRECONDITION_FAILED",
+              "retryable": false,
+              "errors": []
+            }
+          }
+        },
+        {
+          "http": {
+            "method": "POST",
+            "path": "/notes/{{noteId}}/publish",
+            "headers": {
+              "Idempotency-Key": "{{$uuid:p2}}",
+              "If-Match": "\"v1\""
+            }
+          },
+          "expect": {
+            "status": 200,
+            "headers": {
+              "content-type": "application/json",
+              "etag": "\"v2\"",
+              "idempotent-replay": {
+                "$absent": true
+              }
+            },
+            "body": {
+              "id": "{{noteId}}",
+              "title": "Groceries",
+              "body": "",
+              "status": "published",
+              "version": 2,
+              "created_at": "{{created}}",
+              "updated_at": {
+                "$type": "datetime"
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "NOTE-066",
+      "title": "A stray body on body-less publish is ignored",
+      "phase": 5,
+      "derivedFrom": [
+        "profile HTTP-3"
+      ],
+      "steps": [
+        {
+          "http": {
+            "method": "POST",
+            "path": "/notes",
+            "headers": {
+              "Idempotency-Key": "{{$uuid:k1}}"
+            },
+            "body": {
+              "title": "Groceries"
+            }
+          },
+          "expect": {
+            "status": 201,
+            "headers": {
+              "content-type": "application/json",
+              "etag": "\"v1\"",
+              "location": {
+                "$regex": "^/notes/[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+              },
+              "idempotent-replay": {
+                "$absent": true
+              }
+            },
+            "body": {
+              "id": {
+                "$type": "uuidv7"
+              },
+              "title": "Groceries",
+              "body": "",
+              "status": "draft",
+              "version": 1,
+              "created_at": {
+                "$type": "datetime"
+              },
+              "updated_at": {
+                "$type": "datetime"
+              }
+            }
+          },
+          "capture": {
+            "noteId": "body.id",
+            "created": "body.created_at"
+          }
+        },
+        {
+          "http": {
+            "method": "POST",
+            "path": "/notes/{{noteId}}/publish",
+            "headers": {
+              "Idempotency-Key": "{{$uuid:p1}}",
+              "Content-Type": "text/plain"
+            },
+            "rawBody": "ignored"
+          },
+          "expect": {
+            "status": 200,
+            "headers": {
+              "content-type": "application/json",
+              "etag": "\"v2\"",
+              "idempotent-replay": {
+                "$absent": true
+              }
+            },
+            "body": {
+              "id": "{{noteId}}",
+              "title": "Groceries",
+              "body": "",
+              "status": "published",
+              "version": 2,
+              "created_at": "{{created}}",
+              "updated_at": {
+                "$type": "datetime"
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "NOTE-053",
+      "title": "Editing a published note is 409 and leaves it unchanged",
+      "phase": 5,
+      "covers": [
+        "inv:V2"
+      ],
+      "derivedFrom": [
+        "SPEC §5.2",
+        "SPEC V2",
+        "DEC002"
+      ],
+      "steps": [
+        {
+          "http": {
+            "method": "POST",
+            "path": "/notes",
+            "headers": {
+              "Idempotency-Key": "{{$uuid:k1}}"
+            },
+            "body": {
+              "title": "Groceries"
+            }
+          },
+          "expect": {
+            "status": 201,
+            "headers": {
+              "content-type": "application/json",
+              "etag": "\"v1\"",
+              "location": {
+                "$regex": "^/notes/[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+              },
+              "idempotent-replay": {
+                "$absent": true
+              }
+            },
+            "body": {
+              "id": {
+                "$type": "uuidv7"
+              },
+              "title": "Groceries",
+              "body": "",
+              "status": "draft",
+              "version": 1,
+              "created_at": {
+                "$type": "datetime"
+              },
+              "updated_at": {
+                "$type": "datetime"
+              }
+            }
+          },
+          "capture": {
+            "noteId": "body.id",
+            "created": "body.created_at"
+          }
+        },
+        {
+          "http": {
+            "method": "POST",
+            "path": "/notes/{{noteId}}/publish",
+            "headers": {
+              "Idempotency-Key": "{{$uuid:p1}}"
+            }
+          },
+          "expect": {
+            "status": 200
+          }
+        },
+        {
+          "http": {
+            "method": "PATCH",
+            "path": "/notes/{{noteId}}",
+            "headers": {
+              "If-Match": "\"v2\""
+            },
+            "body": {
+              "title": "Changed"
+            }
+          },
+          "expect": {
+            "status": 409,
+            "headers": {
+              "content-type": "application/problem+json",
+              "etag": {
+                "$absent": true
+              }
+            },
+            "body": {
+              "type": "https://errors.notes.example/NOTE_NOT_EDITABLE",
+              "title": "Note is not editable",
+              "status": 409,
+              "detail": {
+                "$type": "string"
+              },
+              "instance": "/notes/{{noteId}}",
+              "code": "NOTE_NOT_EDITABLE",
+              "retryable": false,
+              "errors": []
+            }
+          }
+        },
+        {
+          "http": {
+            "method": "GET",
+            "path": "/notes/{{noteId}}"
+          },
+          "expect": {
+            "status": 200,
+            "headers": {
+              "content-type": "application/json",
+              "etag": "\"v2\"",
+              "idempotent-replay": {
+                "$absent": true
+              }
+            },
+            "body": {
+              "id": "{{noteId}}",
+              "title": "Groceries",
+              "body": "",
+              "status": "published",
+              "version": 2,
+              "created_at": "{{created}}",
+              "updated_at": {
+                "$type": "datetime"
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "NOTE-031",
+      "title": "The status filter returns only matching notes",
+      "phase": 5,
+      "derivedFrom": [
+        "profile PAGE-5",
+        "openapi listNotes status"
+      ],
+      "steps": [
+        {
+          "http": {
+            "method": "POST",
+            "path": "/notes",
+            "headers": {
+              "Idempotency-Key": "{{$uuid:ka}}"
+            },
+            "body": {
+              "title": "Draft"
+            }
+          },
+          "expect": {
+            "status": 201,
+            "headers": {
+              "content-type": "application/json",
+              "etag": "\"v1\"",
+              "location": {
+                "$regex": "^/notes/[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+              },
+              "idempotent-replay": {
+                "$absent": true
+              }
+            },
+            "body": {
+              "id": {
+                "$type": "uuidv7"
+              },
+              "title": "Draft",
+              "body": "",
+              "status": "draft",
+              "version": 1,
+              "created_at": {
+                "$type": "datetime"
+              },
+              "updated_at": {
+                "$type": "datetime"
+              }
+            }
+          },
+          "capture": {
+            "d": "body.id"
+          }
+        },
+        {
+          "http": {
+            "method": "POST",
+            "path": "/notes",
+            "headers": {
+              "Idempotency-Key": "{{$uuid:kb}}"
+            },
+            "body": {
+              "title": "Pub"
+            }
+          },
+          "expect": {
+            "status": 201,
+            "headers": {
+              "content-type": "application/json",
+              "etag": "\"v1\"",
+              "location": {
+                "$regex": "^/notes/[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+              },
+              "idempotent-replay": {
+                "$absent": true
+              }
+            },
+            "body": {
+              "id": {
+                "$type": "uuidv7"
+              },
+              "title": "Pub",
+              "body": "",
+              "status": "draft",
+              "version": 1,
+              "created_at": {
+                "$type": "datetime"
+              },
+              "updated_at": {
+                "$type": "datetime"
+              }
+            }
+          },
+          "capture": {
+            "noteId": "body.id",
+            "created": "body.created_at"
+          }
+        },
+        {
+          "http": {
+            "method": "POST",
+            "path": "/notes/{{noteId}}/publish",
+            "headers": {
+              "Idempotency-Key": "{{$uuid:p1}}"
+            }
+          },
+          "expect": {
+            "status": 200
+          }
+        },
+        {
+          "http": {
+            "method": "GET",
+            "path": "/notes",
+            "query": {
+              "status": "published"
+            }
+          },
+          "expect": {
+            "status": 200,
+            "headers": {
+              "content-type": "application/json",
+              "etag": {
+                "$absent": true
+              },
+              "idempotent-replay": {
+                "$absent": true
+              }
+            },
+            "body": {
+              "data": [
+                {
+                  "id": "{{noteId}}",
+                  "title": "Pub",
+                  "body": "",
+                  "status": "published",
+                  "version": 2,
+                  "created_at": "{{created}}",
+                  "updated_at": {
+                    "$type": "datetime"
+                  }
+                }
+              ],
+              "pagination": {
+                "next_cursor": null,
+                "has_more": false
+              }
+            }
+          }
+        },
+        {
+          "http": {
+            "method": "GET",
+            "path": "/notes",
+            "query": {
+              "status": "archived"
+            }
+          },
+          "expect": {
+            "status": 422,
+            "headers": {
+              "content-type": "application/problem+json",
+              "etag": {
+                "$absent": true
+              }
+            },
+            "body": {
+              "type": "https://errors.notes.example/VALIDATION_ERROR",
+              "title": "Validation failed",
+              "status": 422,
+              "detail": {
+                "$type": "string"
+              },
+              "instance": "/notes",
+              "code": "VALIDATION_ERROR",
+              "retryable": false,
+              "errors": [
+                {
+                  "in": "query",
+                  "pointer": "status",
+                  "issue": "enum"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

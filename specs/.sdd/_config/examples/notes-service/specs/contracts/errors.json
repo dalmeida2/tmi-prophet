@@ -1,0 +1,18 @@
+{
+  "$schema": "../../../../schemas/errors.schema.json",
+  "typeBaseUri": "https://errors.notes.example/",
+  "errors": [
+    { "code": "MALFORMED_REQUEST", "title": "Malformed request", "status": 400, "retryable": false, "description": "Body is not parseable JSON, or empty where a body is required." },
+    { "code": "NOT_FOUND", "title": "Not found", "status": 404, "retryable": false, "description": "Unknown path, unknown note id, or malformed id." },
+    { "code": "METHOD_NOT_ALLOWED", "title": "Method not allowed", "status": 405, "retryable": false, "description": "Known path, method not declared for it." },
+    { "code": "INVALID_STATE_TRANSITION", "title": "Invalid state transition", "status": 409, "retryable": false, "description": "publishNote on a published note." },
+    { "code": "IDEMPOTENCY_IN_FLIGHT", "title": "Request with this idempotency key is in progress", "status": 409, "retryable": true, "description": "Same Idempotency-Key while the first request is executing." },
+    { "code": "NOTE_NOT_EDITABLE", "title": "Note is not editable", "status": 409, "retryable": false, "description": "updateNote on a note that is not a draft." },
+    { "code": "PRECONDITION_FAILED", "title": "Precondition failed", "status": 412, "retryable": false, "description": "If-Match is not exactly the current strong tag." },
+    { "code": "UNSUPPORTED_MEDIA_TYPE", "title": "Unsupported media type", "status": 415, "retryable": false, "description": "Operation with a request body called without Content-Type application/json." },
+    { "code": "VALIDATION_ERROR", "title": "Validation failed", "status": 422, "retryable": false, "description": "Query, header or body violates the contract; every violation is listed in errors[]." },
+    { "code": "IDEMPOTENCY_KEY_MISMATCH", "title": "Idempotency key reused with a different request", "status": 422, "retryable": false, "description": "Same Idempotency-Key, different method, path or body." },
+    { "code": "PRECONDITION_REQUIRED", "title": "Precondition required", "status": 428, "retryable": false, "description": "If-Match missing on PATCH or DELETE." },
+    { "code": "INTERNAL_ERROR", "title": "Internal error", "status": 500, "retryable": false, "description": "Unhandled fault." }
+  ]
+}

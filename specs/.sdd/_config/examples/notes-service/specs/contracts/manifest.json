@@ -1,0 +1,16 @@
+{
+  "$schema": "../../../../schemas/contract-manifest.schema.json",
+  "projectType": "backend-service",
+  "interfaces": ["http"],
+  "equivalenceTarget": 2,
+  "artifacts": {
+    "openapi": "openapi.yaml",
+    "errors": "errors.json",
+    "statecharts": "statecharts.json",
+    "schema": "schema.sql"
+  },
+  "profileOverrides": [],
+  "coverageExempt": {
+    "error:INTERNAL_ERROR": "An unhandled fault cannot be triggered black-box without fault injection, which the spec does not define."
+  }
+}

@@ -1,0 +1,84 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SDD oracle configuration (specs/fixtures/oracle.config.json)",
+  "description": "How oracle.cjs reaches an implementation. Machine-specific values come from environment variables via ${VAR} / ${VAR:-default}, so the frozen file is identical for every build.",
+  "type": "object",
+  "required": ["targets"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": { "type": "string" },
+    "targets": {
+      "description": "Named builds. 'default' is graded by `oracle run`; 'a' and 'b' are compared by `oracle diff`.",
+      "type": "object",
+      "required": ["default"],
+      "additionalProperties": { "$ref": "#/$defs/target" }
+    },
+    "defaultSetup": { "type": "array", "items": { "type": "string" }, "description": "Hooks run before every case unless the case sets `setup`." },
+    "hooks": { "type": "object", "additionalProperties": { "$ref": "#/$defs/command" } },
+    "adapters": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "sql": {
+          "allOf": [{ "$ref": "#/$defs/command" }],
+          "description": "Runs one SQL query. Arguments may contain {{sql}}. Must print the result rows as a JSON array on stdout."
+        }
+      }
+    },
+    "readiness": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "http": {
+          "type": "object",
+          "required": ["path"],
+          "additionalProperties": false,
+          "properties": {
+            "method": { "enum": ["GET", "HEAD"] },
+            "path": { "type": "string", "pattern": "^/" },
+            "expectStatus": { "type": "integer" }
+          }
+        },
+        "timeoutMs": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "timeoutMs": { "type": "integer", "minimum": 1, "description": "Per-step timeout (default 10000)." },
+    "buildEnv": {
+      "description": "Frozen environment every graded build is started with (SPEC §12 values for oracle runs, e.g. shortened TTLs per profile ENV-3). Print with `oracle.cjs env`.",
+      "type": "object",
+      "propertyNames": { "pattern": "^[A-Z][A-Z0-9_]*$" },
+      "additionalProperties": { "type": "string" }
+    },
+    "observedHeaders": {
+      "description": "Response headers SPEC declares contractual beyond the profile's HTTP-10 set (lowercase). `oracle diff` compares only contractual headers.",
+      "type": "array",
+      "items": { "type": "string", "pattern": "^[a-z0-9-]+$" }
+    },
+    "variablePaths": {
+      "description": "Declared degrees of freedom: JSONPath-like patterns ($..id, $.data[*].created_at) whose values may differ between builds in `oracle diff` (type must still match). Must mirror SPEC.md §Equivalence Boundary.",
+      "type": "array",
+      "items": { "type": "string", "pattern": "^\\$" }
+    }
+  },
+  "$defs": {
+    "target": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "baseUrl": { "type": "string" },
+        "env": { "type": "object", "additionalProperties": { "type": "string" }, "description": "Extra env for hooks, adapters and run steps of this target." }
+      }
+    },
+    "command": {
+      "type": "object",
+      "required": ["cmd"],
+      "additionalProperties": false,
+      "properties": {
+        "cmd": { "type": "string" },
+        "args": { "type": "array", "items": { "type": "string" } },
+        "env": { "type": "object", "additionalProperties": { "type": "string" } },
+        "timeoutMs": { "type": "integer", "minimum": 1 }
+      }
+    }
+  }
+}
